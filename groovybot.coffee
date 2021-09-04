@@ -3,7 +3,7 @@ require 'coffeescript/register'
 { Client, Intents } = require 'discord.js'
 fetch = require 'node-fetch'
 _ = require 'lodash'
-{db, queries} = require './groovybotsetup'
+DBHelper = require './groovybotsetup'
 
 ids = 
     game: 'w6j992dj'
@@ -34,20 +34,10 @@ getruns = ->
     )
 
 do ->
-    db = await db
+    dbHelper = new DBHelper
     runs = await getruns()
-    for run in runs
-        await db.run(
-            queries.insert_run,
-            {
-                ':userid': run.userid,
-                ':category': run.category,
-                ':track': run.track,
-                ":time": run.time,
-                ":date": run.date,
-                ":place": run.place
-            }
-        )
+    await dbHelper.insert_runs(runs)
+    
 
 
 client = new Client(intents: [Intents.FLAGS.GUILDS])

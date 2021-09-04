@@ -104,17 +104,36 @@ queries =
 	get_newest_runs: (numruns) ->
 		"SELECT * FROM runs ORDER BY date DESC LIMIT #{numruns}"
 
-db = do ->
-	db = await sqlite.open(
-		filename: './groovy.db'
-		driver: sqlite3.Database
-	)
-	await db.exec(queries.create_runs)
-	await db.exec(queries.create_users)
-	await db.exec(queries.create_scores)
-	await db.exec(queries.create_files)
-	db
 
-module.exports = 
-	queries: queries
-	db: db
+getdb = do ->
+	db = null
+	return ->
+		unless db?
+			db = await sqlite.open(
+				filename: './groovy.db'
+				driver: sqlite3.Database
+			)
+			await db.exec(queries.create_runs)
+			await db.exec(queries.create_users)
+			await db.exec(queries.create_scores)
+			await db.exec(queries.create_files)
+		db
+
+class DBHelper
+	insert_runs: (runs) ->
+		db = await getdb()
+		for run in runs
+			await db.run(
+				queries.insert_run,
+				{
+					':userid': run.userid,
+					':category': run.category,
+					':track': run.track,
+					":time": run.time,
+					":date": run.date,
+					":place": run.place
+				}
+			)
+
+
+module.exports = DBHelper
