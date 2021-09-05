@@ -7,6 +7,7 @@
     "node-fetch": "^2.6.1",
     "prettytable": "^0.3.1",
     "sqlite": "^4.0.23",
-    "sqlite3": "^5.0.2"
+    "sqlite3": "^5.0.2",
+    "tinyduration": "^3.2.2"
   }
 }

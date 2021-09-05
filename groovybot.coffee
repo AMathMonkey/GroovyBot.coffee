@@ -3,7 +3,9 @@ require 'coffeescript/register'
 { Client, Intents } = require 'discord.js'
 fetch = require 'node-fetch'
 _ = require 'lodash'
-DBHelper = require './groovybotsetup'
+dbHelper = new (require './groovybotsetup')
+commandHelper = new (require './groovybotcommands')
+tinyduration = require 'tinyduration'
 
 ids = 
     game: 'w6j992dj'
@@ -18,26 +20,45 @@ ids =
         'Metro Madness': 'ldy2qjw3'
         'Wicked Woods': 'gdr2r89z'
 
-getruns = ->
+getruns = () ->
     _.flattenDeep (for category, cid of ids.categories
         for track, tid of ids.tracks
             response = await fetch "https://www.speedrun.com/api/v1/leaderboards/#{ids.game}/level/#{tid}/#{cid}"
             throw new Error "Response code #{response.status} with text #{response.statusText}" unless response.ok
             json = await response.json()
-            json.data.runs.map (run) ->
+            json.data.runs.map((run) ->
                 track: track
                 category: category
                 place: run.place
                 userid: run.run.players[0].id
                 date: run.run.date
                 time: run.run.times.primary
+            )
     )
 
-do ->
-    dbHelper = new DBHelper
+enclose_in_code_block = (message) ->
+    "```\n#{message}\n```"
+
+format_time = (time_string) ->
+    time_obj = tinyduration.parse time_string
+    "#{time_obj.minutes}:#{time_obj.seconds.toFixed(2).padStart(5, "0")}"
+
+make_ordinal = (n) ->
+    suffix = if 11 <= (n % 100) <= 13 then "th"
+    else ["th", "st", "nd", "rd", "th"][Math.min(n % 10, 4)]
+    n + suffix
+
+
+calc_score = (placing) ->
+    switch placing
+        when 1 then 100
+        when 2 then 97
+        else Math.max(0, 98 - placing)
+
+
+do () ->
     runs = await getruns()
     await dbHelper.insert_runs(runs)
-    
 
 
 client = new Client(intents: [Intents.FLAGS.GUILDS])
@@ -51,12 +72,18 @@ else
     GROOVYBOT_CHANNEL_IDS = [797386043024343090]
 
 client.once 'ready', () -> 
-	console.log "Logged in as #{client.user.tag}!"
+    console.log "Logged in as #{client.user.tag}!"
 
-client.on 'interactionCreate', (interaction) ->
-	return unless interaction.isCommand()
+client.on 'interactionCreate', (i) ->
+    return unless i.isCommand() and i of GROOVYBOT_CHANNEL_IDS
 
-	switch interaction.commandName
-		when 'ping' then await interaction.reply 'Pong!' 
+    switch i.commandName
+        when 'ping' then await i.reply 'Pong!' 
+
+        when 'runsperplayer'
+            message = await commandHelper.get_number_of_runs_per_player()
+            i.reply(enclose_in_code_block message)
+        
+
 
 client.login process.env.DISCORD_TOKEN
