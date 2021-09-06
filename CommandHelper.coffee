@@ -1,4 +1,4 @@
-dbHelper = new (require './groovybotsetup.coffee')
+dbHelper = new (require './DBHelper.coffee')
 
 class CommandHelper
     runsperplayer: () ->

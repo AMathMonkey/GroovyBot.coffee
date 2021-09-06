@@ -3,8 +3,8 @@ require 'coffeescript/register'
 { Client, Intents } = require 'discord.js'
 fetch = require 'node-fetch'
 _ = require 'lodash'
-dbHelper = new (require './groovybotsetup')
-commandHelper = new (require './groovybotcommands')
+dbHelper = new (require './DBhelper')
+commandHelper = new (require './CommandHelper')
 tinyduration = require 'tinyduration'
 
 ids = 
@@ -21,19 +21,26 @@ ids =
         'Wicked Woods': 'gdr2r89z'
 
 getruns = () ->
-    _.flattenDeep (for category, cid of ids.categories
+    leaderboards = _.flatten(for category, cid of ids.categories
         for track, tid of ids.tracks
-            response = await fetch "https://www.speedrun.com/api/v1/leaderboards/#{ids.game}/level/#{tid}/#{cid}"
-            throw new Error "Response code #{response.status} with text #{response.statusText}" unless response.ok
-            json = await response.json()
-            json.data.runs.map((run) ->
-                track: track
-                category: category
+            {
+                track
+                category
+                req:
+                    fetch "https://www.speedrun.com/api/v1/leaderboards/#{ids.game}/level/#{tid}/#{cid}"
+                    .then((response) => response.json())
+            }
+    )
+    return _.flatten(for leaderboard from leaderboards
+        for run from (await leaderboard.req).data.runs
+            {
+                track: leaderboard.track
+                category: leaderboard.category
                 place: run.place
                 userid: run.run.players[0].id
                 date: run.run.date
                 time: run.run.times.primary
-            )
+            }
     )
 
 enclose_in_code_block = (message) ->
@@ -41,13 +48,12 @@ enclose_in_code_block = (message) ->
 
 format_time = (time_string) ->
     time_obj = tinyduration.parse time_string
-    "#{time_obj.minutes}:#{time_obj.seconds.toFixed(2).padStart(5, "0")}"
+    "#{time_obj.minutes}:#{(time_obj.seconds ? 0).toFixed(2).padStart(5, "0")}"
 
 make_ordinal = (n) ->
     suffix = if 11 <= (n % 100) <= 13 then "th"
     else ["th", "st", "nd", "rd", "th"][Math.min(n % 10, 4)]
     n + suffix
-
 
 calc_score = (placing) ->
     switch placing
