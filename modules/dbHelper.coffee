@@ -50,7 +50,7 @@ queries =
             WHERE
                 category = :category
                 AND track = :track
-                AND lower(name) = lower(:name)
+                AND lower(name) = lower(:name);
         """
 
     get_one_run_for_new_runs: 
@@ -62,29 +62,29 @@ queries =
                 AND category = :category
                 AND time = :time
                 AND lower(name) = lower(:name)
-                AND date = :date
+                AND date = :date;
         """
 
     insert_run:
         """
             REPLACE INTO runs (userid, category, track, time, date, place)
-                VALUES (:userid, :category, :track, :time, :date, :place)
+                VALUES (:userid, :category, :track, :time, :date, :place);
         """
 
     insert_score: 
         """
             INSERT INTO scores (userid, score)
-                VALUES (:userid, :score)
+                VALUES (:userid, :score);
         """
 
     get_wr_runs: 
         """
             SELECT * FROM runs
             INNER JOIN users ON users.userid = runs.userid
-            WHERE place = 1
+            WHERE place = 1;
         """
 
-    get_point_rankings: "SELECT data FROM files WHERE filename = 'PointRankings'"
+    get_point_rankings: "SELECT data FROM files WHERE filename = 'PointRankings';"
 
     replace_point_rankings:
         """
@@ -104,8 +104,12 @@ queries =
             ORDER BY c DESC;
         """
 
-    get_newest_runs: (numruns) ->
-        "SELECT * FROM runs ORDER BY date DESC LIMIT #{numruns}"
+    get_newest_runs:
+        """
+            SELECT * FROM runs
+            INNER JOIN users ON users.userid = runs.userid
+            ORDER BY date DESC LIMIT ?;
+        """
 
 
 getdb = do () ->
@@ -132,6 +136,11 @@ exports.insert_runs = (runs) ->
 exports.get_number_of_runs_per_player = () ->
     db = await getdb()
     await db.all(queries.get_number_of_runs_per_player)
+
+exports.get_newest_runs = (numruns) ->
+    db = await getdb()
+    await db.all(queries.get_newest_runs, numruns)
+
 
 exports.update_user_cache = () ->
     db = await getdb()
