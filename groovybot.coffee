@@ -50,7 +50,7 @@ do () ->
     await dbHelper.update_user_cache()
     message = await commandHelper.runsperplayer()
     console.log utilities.enclose_in_code_block message
-    message = await commandHelper.newestruns(5)
+    message = await commandHelper.newestruns(3)
     console.log utilities.enclose_in_code_block message
 
 

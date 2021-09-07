@@ -11,18 +11,15 @@ exports.runsperplayer = () ->
 exports.newestruns = (numruns) ->
     invalid_arg = false
     numruns = parseInt(numruns, 10)
-    if numruns is NaN or not 1 <= numruns <= 10
+    if numruns is NaN or not (1 <= numruns <= 10)
         invalid_arg = true
         numruns = 5
 
     result = await dbHelper.get_newest_runs(numruns)
         
-    header = if numruns is 1 then "Here is the newest run on the board"
-    else "Here are the #{numruns} newest runs on the board"
-    +
-    if invalid_arg then "(can display between 1 and 10)" else ''
-    +
-    ":\n"
+    header = (if numruns is 1 then "Here is the newest run on the board"
+    else "Here are the #{numruns} newest runs on the board") +
+    (if invalid_arg then " (can display between 1 and 10)" else '') + ":\n"
 
     [
         header,
