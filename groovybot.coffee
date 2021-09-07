@@ -1,11 +1,13 @@
 require('dotenv').config()
 require 'coffeescript/register'
+
 { Client, Intents } = require 'discord.js'
 fetch = require 'node-fetch'
 _ = require 'lodash'
-dbHelper = new (require './DBhelper')
-commandHelper = new (require './CommandHelper')
 tinyduration = require 'tinyduration'
+
+dbHelper = require './DBhelper'
+commandHelper = require './CommandHelper'
 
 ids = 
     game: 'w6j992dj'
@@ -25,21 +27,21 @@ getruns = () ->
     for category, cid of ids.categories
         for track, tid of ids.tracks
             do (category, cid, track, tid) ->
-                    boards.push(
-                        fetch "https://www.speedrun.com/api/v1/leaderboards/#{ids.game}/level/#{tid}/#{cid}"
-                        .then((response) => response.json())
-                        .then((json) => 
-                            for run from json.data.runs
-                                {
-                                    track: track
-                                    category: category
-                                    place: run.place
-                                    userid: run.run.players[0].id
-                                    date: run.run.date
-                                    time: run.run.times.primary
-                                }
-                        )
+                boards.push(
+                    fetch "https://www.speedrun.com/api/v1/leaderboards/#{ids.game}/level/#{tid}/#{cid}"
+                    .then((response) => response.json())
+                    .then((json) => 
+                        for run from json.data.runs
+                            {
+                                track: track
+                                category: category
+                                place: run.place
+                                userid: run.run.players[0].id
+                                date: run.run.date
+                                time: run.run.times.primary
+                            }
                     )
+                )
     _.flatten await Promise.all boards
 
 enclose_in_code_block = (message) ->
@@ -63,8 +65,10 @@ calc_score = (placing) ->
 
 do () ->
     runs = await getruns()
-    await dbHelper.update_user_cache(runs)
-    await dbHelper.insert_runs(runs)
+    await dbHelper.insert_runs runs
+    await dbHelper.update_user_cache()
+    message = await commandHelper.runsperplayer()
+    console.log enclose_in_code_block message
 
 
 client = new Client(intents: [Intents.FLAGS.GUILDS])

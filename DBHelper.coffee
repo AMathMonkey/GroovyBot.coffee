@@ -125,34 +125,31 @@ getdb = do () ->
 add_colons = (obj) ->
     _.fromPairs([":#{k}", v] for k, v of obj)
 
-class DBHelper
-    insert_runs: (runs) ->
-        db = await getdb()
-        await Promise.all(db.run(queries.insert_run, add_colons(run)) for run from runs)
+exports.insert_runs = (runs) ->
+    db = await getdb()
+    await Promise.all(db.run(queries.insert_run, add_colons(run)) for run from runs)
     
-    get_number_of_runs_per_player: () ->
-        db = await getdb()
-        await db.all(queries.get_number_of_runs_per_player)
+exports.get_number_of_runs_per_player = () ->
+    db = await getdb()
+    await db.all(queries.get_number_of_runs_per_player)
 
-    update_user_cache: (runs) ->
-        db = await getdb()
-        currentDate = new Date()
-        userqueries = for run from runs
-            do (run) -> # this is needed or you get weird var-related misbehaviour
-                db.get('SELECT date FROM users WHERE userid = ?', run.userid)
-                .then((result) =>
-                    unless result? and (currentDate - new Date(result.date)) < 604800000 # 1 week in milliseconds
-                        fetch "https://www.speedrun.com/api/v1/users/#{run.userid}"
-                        .then((response) => response.json())
-                        .then((json) => json.data.names.international)
-                        .then((name) => 
-                            db.run(
-                                'REPLACE INTO users (userid, name, date) VALUES (?, ?, ?)',
-                                run.userid, name, currentDate.toJSON()
-                            )
+exports.update_user_cache = () ->
+    db = await getdb()
+    currentDate = new Date()
+    userids = await db.all 'SELECT DISTINCT userid FROM runs'
+    userqueries = for userid from userids.map((x) => x.userid)
+        do (userid) -> # this is needed or you get weird var-related misbehaviour
+            db.get('SELECT date FROM users WHERE userid = ?', userid)
+            .then((result) =>
+                unless result? and (currentDate - new Date(result.date)) < 604800000 # 1 week in milliseconds
+                    fetch "https://www.speedrun.com/api/v1/users/#{userid}"
+                    .then((response) => response.json())
+                    .then((json) => json.data.names.international)
+                    .then((name) => 
+                        db.run(
+                            'REPLACE INTO users (userid, name, date) VALUES (?, ?, ?)',
+                            userid, name, currentDate.toJSON()
                         )
-                )
-        await Promise.all userqueries
-            
-        
-module.exports = DBHelper
+                    )
+            )
+    await Promise.all userqueries
