@@ -21,27 +21,26 @@ ids =
         'Wicked Woods': 'gdr2r89z'
 
 getruns = () ->
-    leaderboards = _.flatten(for category, cid of ids.categories
+    boards = []
+    for category, cid of ids.categories
         for track, tid of ids.tracks
-            {
-                track
-                category
-                req:
-                    fetch "https://www.speedrun.com/api/v1/leaderboards/#{ids.game}/level/#{tid}/#{cid}"
-                    .then((response) => response.json())
-            }
-    )
-    return _.flatten(for leaderboard from leaderboards
-        for run from (await leaderboard.req).data.runs
-            {
-                track: leaderboard.track
-                category: leaderboard.category
-                place: run.place
-                userid: run.run.players[0].id
-                date: run.run.date
-                time: run.run.times.primary
-            }
-    )
+            do (category, cid, track, tid) ->
+                    boards.push(
+                        fetch "https://www.speedrun.com/api/v1/leaderboards/#{ids.game}/level/#{tid}/#{cid}"
+                        .then((response) => response.json())
+                        .then((json) => 
+                            for run from json.data.runs
+                                {
+                                    track: track
+                                    category: category
+                                    place: run.place
+                                    userid: run.run.players[0].id
+                                    date: run.run.date
+                                    time: run.run.times.primary
+                                }
+                        )
+                    )
+    _.flatten await Promise.all boards
 
 enclose_in_code_block = (message) ->
     "```\n#{message}\n```"
@@ -64,6 +63,7 @@ calc_score = (placing) ->
 
 do () ->
     runs = await getruns()
+    await dbHelper.update_user_cache(runs)
     await dbHelper.insert_runs(runs)
 
 

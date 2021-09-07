@@ -1,17 +1,18 @@
 sqlite3 = require 'sqlite3'
 sqlite = require 'sqlite'
 _ = require 'lodash'
+fetch = require 'node-fetch'
 
 queries =
     create_runs: 
         """
             CREATE TABLE IF NOT EXISTS runs (
-                userid TEXT,
-                category TEXT,
-                track TEXT,
-                time TEXT,
-                date TEXT,
-                place INTEGER,
+                userid TEXT NOT NULL,
+                category TEXT NOT NULL,
+                track TEXT NOT NULL,
+                time TEXT NOT NULL,
+                date TEXT NOT NULL,
+                place INTEGER NOT NULL,
                 PRIMARY KEY (userid, category, track, time, date)
             );
         """
@@ -19,8 +20,9 @@ queries =
     create_users: 
         """
             CREATE TABLE IF NOT EXISTS users (
-                userid TEXT,
-                name TEXT,
+                userid TEXT NOT NULL,
+                name TEXT NOT NULL,
+                date TEXT NOT NULL,
                 PRIMARY KEY (userid)
             );
         """
@@ -28,16 +30,16 @@ queries =
     create_scores: 
         """
             CREATE TABLE IF NOT EXISTS scores (
-                userid TEXT PRIMARY KEY,
-                score INTEGER
+                userid TEXT PRIMARY KEY NOT NULL,
+                score INTEGER NOT NULL
             );
         """
 
     create_files:
         """
             CREATE TABLE IF NOT EXISTS files (
-                filename TEXT PRIMARY KEY,
-                data BLOB
+                filename TEXT PRIMARY KEY NOT NULL,
+                data BLOB NOT NULL
             );
         """
 
@@ -65,7 +67,7 @@ queries =
 
     insert_run:
         """
-            INSERT INTO runs (userid, category, track, time, date, place)
+            REPLACE INTO runs (userid, category, track, time, date, place)
                 VALUES (:userid, :category, :track, :time, :date, :place)
         """
 
@@ -132,9 +134,25 @@ class DBHelper
         db = await getdb()
         await db.all(queries.get_number_of_runs_per_player)
 
-    
-
-
-    
-
+    update_user_cache: (runs) ->
+        db = await getdb()
+        currentDate = new Date()
+        userqueries = for run from runs
+            do (run) -> # this is needed or you get weird var-related misbehaviour
+                db.get('SELECT date FROM users WHERE userid = ?', run.userid)
+                .then((result) =>
+                    unless result? and (currentDate - new Date(result.date)) < 604800000 # 1 week in milliseconds
+                        fetch "https://www.speedrun.com/api/v1/users/#{run.userid}"
+                        .then((response) => response.json())
+                        .then((json) => json.data.names.international)
+                        .then((name) => 
+                            db.run(
+                                'REPLACE INTO users (userid, name, date) VALUES (?, ?, ?)',
+                                run.userid, name, currentDate.toJSON()
+                            )
+                        )
+                )
+        await Promise.all userqueries
+            
+        
 module.exports = DBHelper
