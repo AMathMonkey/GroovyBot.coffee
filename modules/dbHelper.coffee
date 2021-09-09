@@ -1,7 +1,8 @@
 sqlite3 = require 'sqlite3'
 sqlite = require 'sqlite'
 _ = require 'lodash'
-fetch = require 'node-fetch'
+
+srcomHelper = require './srcomHelper'
 
 queries =
     create_runs: 
@@ -142,7 +143,8 @@ exports.get_newest_runs = (numruns) ->
     await db.all(queries.get_newest_runs, numruns)
 
 
-exports.update_user_cache = () ->
+
+exports.update_user_cache = (userids) ->
     db = await getdb()
     currentDate = new Date()
     userids = await db.all 'SELECT DISTINCT userid FROM runs'
@@ -151,9 +153,7 @@ exports.update_user_cache = () ->
             db.get('SELECT date FROM users WHERE userid = ?', userid)
             .then((result) =>
                 unless result? and (currentDate - new Date(result.date)) < 604800000 # 1 week in milliseconds
-                    fetch "https://www.speedrun.com/api/v1/users/#{userid}"
-                    .then((response) => response.json())
-                    .then((json) => json.data.names.international)
+                    srcomHelper.get_username(userid)
                     .then((name) => 
                         db.run(
                             'REPLACE INTO users (userid, name, date) VALUES (?, ?, ?)',
