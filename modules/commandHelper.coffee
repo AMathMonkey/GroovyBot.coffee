@@ -25,3 +25,16 @@ exports.newestruns = (numruns) ->
         header,
         "#{run.track} - #{run.category} in #{utilities.format_time(run.time)} by #{run.name}, #{utilities.make_ordinal(run.place)} place" for run in result...
     ].join('\n')
+
+exports.longeststanding = () ->
+    wr_runs = await dbHelper.get_wr_runs()
+    for run from wr_runs
+        run.age = utilities.days_since(run.date)
+    wr_runs.sort((run1, run2) -> run2.age - run1.age)
+
+    [
+        "WR runs sorted by longest standing:\n"
+        "#{run.track} - #{run.category} in #{utilities.format_time(run.time)} by #{run.name}, #{run.age} day#{if run.age is 1 then '' else 's'} old" for run from wr_runs...
+    ].join('\n')
+    
+        

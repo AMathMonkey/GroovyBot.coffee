@@ -17,3 +17,6 @@ exports.calc_score = (placing) ->
         when 1 then 100
         when 2 then 97
         else Math.max(0, 98 - placing)
+
+exports.days_since = (date_string) ->
+    Math.ceil( ((new Date) - (new Date(date_string))) / 8.64e7 )

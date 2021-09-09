@@ -45,7 +45,7 @@ queries =
 
     get_one_run_for_ilranking:
         """
-            SELECT * FROM runs 
+            SELECT runs.*, users.name FROM runs 
             INNER JOIN users ON users.userid = runs.userid
             WHERE
                 category = :category
@@ -55,7 +55,7 @@ queries =
 
     get_one_run_for_new_runs: 
         """
-            SELECT * from runs
+            SELECT runs.*, users.name from runs
             INNER JOIN users ON users.userid = runs.userid
             WHERE
                 track = :track
@@ -79,7 +79,7 @@ queries =
 
     get_wr_runs: 
         """
-            SELECT * FROM runs
+            SELECT runs.*, users.name FROM runs
             INNER JOIN users ON users.userid = runs.userid
             WHERE place = 1;
         """
@@ -97,7 +97,7 @@ queries =
 
     get_number_of_runs_per_player:
         """
-            SELECT name, count(name) AS c
+            SELECT users.name, count(users.name) AS c
             FROM runs
             INNER JOIN users ON users.userid = runs.userid
             GROUP BY name
@@ -106,7 +106,7 @@ queries =
 
     get_newest_runs:
         """
-            SELECT * FROM runs
+            SELECT runs.*, users.name FROM runs
             INNER JOIN users ON users.userid = runs.userid
             ORDER BY date DESC LIMIT ?;
         """
@@ -162,3 +162,7 @@ exports.update_user_cache = () ->
                     )
             )
     await Promise.all userqueries
+
+exports.get_wr_runs = () ->
+    db = await getdb()
+    await db.all(queries.get_wr_runs)

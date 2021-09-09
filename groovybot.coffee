@@ -52,6 +52,8 @@ do () ->
     console.log utilities.enclose_in_code_block message
     message = await commandHelper.newestruns(3)
     console.log utilities.enclose_in_code_block message
+    message = await commandHelper.longeststanding()
+    console.log utilities.enclose_in_code_block message
 
 
 
@@ -69,7 +71,7 @@ client.once 'ready', () ->
     console.log "Logged in as #{client.user.tag}!"
 
 client.on 'interactionCreate', (i) ->
-    return unless i.isCommand() and i of GROOVYBOT_CHANNEL_IDS
+    return unless i.isCommand() and i in GROOVYBOT_CHANNEL_IDS
 
     switch i.commandName
         when 'ping' then await i.reply 'Pong!' 
