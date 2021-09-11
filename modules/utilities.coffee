@@ -1,5 +1,7 @@
 tinyduration = require 'tinyduration'
 
+dbHelper = require './dbHelper'
+
 exports.encloseInCodeBlock = (message) ->
     "```\n#{message}\n```"
 
@@ -20,3 +22,10 @@ exports.calcScore = (placing) ->
 
 exports.daysSince = (dateString) ->
     Math.ceil( ((new Date) - (new Date(dateString))) / 8.64e7 )
+
+exports.getNewRunsString = (runs) ->
+    (for run from runs
+        runInDB = await dbHelper.runInDB run
+        unless runInDB then "New run! #{run.track} - #{run.category} in #{@formatTime(run.time)} by #{run.name}"
+        else continue)
+    .join('\n')

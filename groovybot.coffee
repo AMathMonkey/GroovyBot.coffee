@@ -14,15 +14,22 @@ pointRankingsTask = (channel) ->
     console.log "Checking leaderboards @ #{new Date().toLocaleString()}"
     
     runs = await srcomHelper.getruns()
-    await dbHelper.insertRuns runs
-    await dbHelper.updateUserCache()
+    await dbHelper.updateUserCache runs
+    runsWithNames = await dbHelper.addUsernames runs
+    newRunsString = await utilities.getNewRunsString runsWithNames
+
+    if newRunsString
+        await dbHelper.insertRuns runs
+        console.log newRunsString
+    else
+        console.log "No new runs"
     
-    message = await commandHelper.runsperplayer()
-    console.log utilities.encloseInCodeBlock message
-    message = await commandHelper.newestruns(3)
-    console.log utilities.encloseInCodeBlock message
-    message = await commandHelper.longeststanding()
-    console.log utilities.encloseInCodeBlock message
+    # message = await commandHelper.runsperplayer()
+    # console.log utilities.encloseInCodeBlock message
+    # message = await commandHelper.newestruns(3)
+    # console.log utilities.encloseInCodeBlock message
+    # message = await commandHelper.longeststanding()
+    # console.log utilities.encloseInCodeBlock message
 
 GROOVYBOT_CHANNEL_IDS = []
 client.once 'ready', () -> 

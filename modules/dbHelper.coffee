@@ -56,13 +56,12 @@ queries =
 
     getOneRunForNewRuns: 
         """
-            SELECT runs.*, users.name from runs
-            INNER JOIN users ON users.userid = runs.userid
+            SELECT * from runs
             WHERE
                 track = :track
                 AND category = :category
                 AND time = :time
-                AND lower(name) = lower(:name)
+                AND userid = :userid
                 AND date = :date;
         """
 
@@ -127,26 +126,39 @@ getdb = do () ->
             await db.exec(queries.createFiles)
         db
 
-addColons = (obj) ->
-    _.fromPairs([":#{k}", v] for k, v of obj)
+runToDBQueryParam = (obj, arr) ->
+    _.fromPairs([":#{k}", v] for k, v of obj when k in arr)
 
 exports.insertRuns = (runs) ->
     db = await getdb()
-    await Promise.all(db.run(queries.insertRun, addColons(run)) for run from runs)
+    await db.run(queries.deleteAllRuns)
+    Promise.all(db.run(queries.insertRun, runToDBQueryParam(run, ["userid", "category", "track", "time", "date", "place"])) for run from runs)
+
+exports.runInDB = (run) ->
+    db = await getdb()
+    result = await db.get(queries.getOneRunForNewRuns, runToDBQueryParam(run, ["userid", "category", "track", "time", "date"]))
+    result?
     
 exports.getNumberOfRunsPerPlayer = () ->
     db = await getdb()
-    await db.all(queries.getNumberOfRunsPerPlayer)
+    db.all(queries.getNumberOfRunsPerPlayer)
 
 exports.getNewestRuns = (numruns) ->
     db = await getdb()
-    await db.all(queries.getNewestRuns, numruns)
+    db.all(queries.getNewestRuns, numruns)
 
-exports.updateUserCache = (userids) ->
+exports.addUsernames = (runs) ->
+    db = await getdb()
+    for run from runs
+        {
+            run...
+            (await db.get('SELECT name FROM users WHERE userid = ?', run.userid))...
+        }
+
+exports.updateUserCache = (runs) ->
     db = await getdb()
     currentDate = new Date()
-    userids = await db.all 'SELECT DISTINCT userid FROM runs'
-    Promise.all(for userid from userids.map((x) => x.userid)
+    Promise.all(for userid from runs.map((x) => x.userid)
         do (userid) -> # this is needed or you get weird var-related misbehaviour
             db.get('SELECT date FROM users WHERE userid = ?', userid)
             .then((result) =>
@@ -163,4 +175,4 @@ exports.updateUserCache = (userids) ->
 
 exports.getWRRuns = () ->
     db = await getdb()
-    await db.all(queries.getWRRuns)
+    db.all(queries.getWRRuns)
