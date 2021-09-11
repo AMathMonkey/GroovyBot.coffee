@@ -5,7 +5,7 @@ _ = require 'lodash'
 srcomHelper = require './srcomHelper'
 
 queries =
-    create_runs: 
+    createRuns: 
         """
             CREATE TABLE IF NOT EXISTS runs (
                 userid TEXT NOT NULL,
@@ -18,7 +18,7 @@ queries =
             );
         """
 
-    create_users: 
+    createUsers: 
         """
             CREATE TABLE IF NOT EXISTS users (
                 userid TEXT NOT NULL,
@@ -28,7 +28,7 @@ queries =
             );
         """
 
-    create_scores: 
+    createScores: 
         """
             CREATE TABLE IF NOT EXISTS scores (
                 userid TEXT PRIMARY KEY NOT NULL,
@@ -36,7 +36,7 @@ queries =
             );
         """
 
-    create_files:
+    createFiles:
         """
             CREATE TABLE IF NOT EXISTS files (
                 filename TEXT PRIMARY KEY NOT NULL,
@@ -44,7 +44,7 @@ queries =
             );
         """
 
-    get_one_run_for_ilranking:
+    getOneRunForILRanking:
         """
             SELECT runs.*, users.name FROM runs 
             INNER JOIN users ON users.userid = runs.userid
@@ -54,7 +54,7 @@ queries =
                 AND lower(name) = lower(:name);
         """
 
-    get_one_run_for_new_runs: 
+    getOneRunForNewRuns: 
         """
             SELECT runs.*, users.name from runs
             INNER JOIN users ON users.userid = runs.userid
@@ -66,37 +66,37 @@ queries =
                 AND date = :date;
         """
 
-    insert_run:
+    insertRun:
         """
             REPLACE INTO runs (userid, category, track, time, date, place)
                 VALUES (:userid, :category, :track, :time, :date, :place);
         """
 
-    insert_score: 
+    insertScore: 
         """
             INSERT INTO scores (userid, score)
                 VALUES (:userid, :score);
         """
 
-    get_wr_runs: 
+    getWRRuns: 
         """
             SELECT runs.*, users.name FROM runs
             INNER JOIN users ON users.userid = runs.userid
             WHERE place = 1;
         """
 
-    get_point_rankings: "SELECT data FROM files WHERE filename = 'PointRankings';"
+    getPointRankings: "SELECT data FROM files WHERE filename = 'PointRankings';"
 
-    replace_point_rankings:
+    replacePointRankings:
         """
             REPLACE INTO files (filename, data) VALUES ('PointRankings', ?);
         """
 
-    delete_all_runs: "DELETE FROM runs;"
+    deleteAllRuns: "DELETE FROM runs;"
 
-    delete_all_scores: "DELETE FROM scores;"
+    deleteAllScores: "DELETE FROM scores;"
 
-    get_number_of_runs_per_player:
+    getNumberOfRunsPerPlayer:
         """
             SELECT users.name, count(users.name) AS c
             FROM runs
@@ -105,7 +105,7 @@ queries =
             ORDER BY c DESC;
         """
 
-    get_newest_runs:
+    getNewestRuns:
         """
             SELECT runs.*, users.name FROM runs
             INNER JOIN users ON users.userid = runs.userid
@@ -121,39 +121,37 @@ getdb = do () ->
                 filename: './groovy.db'
                 driver: sqlite3.Database
             )
-            await db.exec(queries.create_runs)
-            await db.exec(queries.create_users)
-            await db.exec(queries.create_scores)
-            await db.exec(queries.create_files)
+            await db.exec(queries.createRuns)
+            await db.exec(queries.createUsers)
+            await db.exec(queries.createScores)
+            await db.exec(queries.createFiles)
         db
 
-add_colons = (obj) ->
+addColons = (obj) ->
     _.fromPairs([":#{k}", v] for k, v of obj)
 
-exports.insert_runs = (runs) ->
+exports.insertRuns = (runs) ->
     db = await getdb()
-    await Promise.all(db.run(queries.insert_run, add_colons(run)) for run from runs)
+    await Promise.all(db.run(queries.insertRun, addColons(run)) for run from runs)
     
-exports.get_number_of_runs_per_player = () ->
+exports.getNumberOfRunsPerPlayer = () ->
     db = await getdb()
-    await db.all(queries.get_number_of_runs_per_player)
+    await db.all(queries.getNumberOfRunsPerPlayer)
 
-exports.get_newest_runs = (numruns) ->
+exports.getNewestRuns = (numruns) ->
     db = await getdb()
-    await db.all(queries.get_newest_runs, numruns)
+    await db.all(queries.getNewestRuns, numruns)
 
-
-
-exports.update_user_cache = (userids) ->
+exports.updateUserCache = (userids) ->
     db = await getdb()
     currentDate = new Date()
     userids = await db.all 'SELECT DISTINCT userid FROM runs'
-    userqueries = for userid from userids.map((x) => x.userid)
+    Promise.all(for userid from userids.map((x) => x.userid)
         do (userid) -> # this is needed or you get weird var-related misbehaviour
             db.get('SELECT date FROM users WHERE userid = ?', userid)
             .then((result) =>
                 unless result? and (currentDate - new Date(result.date)) < 604800000 # 1 week in milliseconds
-                    srcomHelper.get_username(userid)
+                    srcomHelper.getUsername(userid)
                     .then((name) => 
                         db.run(
                             'REPLACE INTO users (userid, name, date) VALUES (?, ?, ?)',
@@ -161,8 +159,8 @@ exports.update_user_cache = (userids) ->
                         )
                     )
             )
-    await Promise.all userqueries
+    )
 
-exports.get_wr_runs = () ->
+exports.getWRRuns = () ->
     db = await getdb()
-    await db.all(queries.get_wr_runs)
+    await db.all(queries.getWRRuns)

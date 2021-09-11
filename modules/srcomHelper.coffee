@@ -14,7 +14,7 @@ ids =
         'Metro Madness': 'ldy2qjw3'
         'Wicked Woods': 'gdr2r89z'
 
-get_one_leaderboard = (track, category) ->
+getOneLeaderboard = (track, category) ->
     fetch "https://www.speedrun.com/api/v1/leaderboards/#{ids.game}/level/#{ids.tracks[track]}/#{ids.categories[category]}"
         .then((response) => response.json())
         .then((json) => 
@@ -33,10 +33,10 @@ exports.getruns = () ->
     boards = []
     for category of ids.categories
         for track of ids.tracks
-            boards.push get_one_leaderboard(track, category)
+            boards.push getOneLeaderboard(track, category)
     _.flatten await Promise.all boards
 
-exports.get_username = (userid) ->
+exports.getUsername = (userid) ->
     fetch "https://www.speedrun.com/api/v1/users/#{userid}"
     .then((response) => response.json())
     .then((json) => json.data.names.international)
