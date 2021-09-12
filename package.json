@@ -1,11 +1,11 @@
 {
   "dependencies": {
+    "ascii-table": "^0.0.9",
     "coffeescript": "^2.5.1",
     "discord.js": "^13.1.0",
     "dotenv": "^10.0.0",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.1",
-    "prettytable": "^0.3.1",
     "sqlite": "^4.0.23",
     "sqlite3": "^5.0.2",
     "tinyduration": "^3.2.2"

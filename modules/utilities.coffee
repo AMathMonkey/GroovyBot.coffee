@@ -1,4 +1,5 @@
 tinyduration = require 'tinyduration'
+AsciiTable = require 'ascii-table'
 
 dbHelper = require './dbHelper'
 
@@ -29,3 +30,13 @@ exports.getNewRunsString = (runs) ->
         unless runInDB then "New run! #{run.track} - #{run.category} in #{@formatTime(run.time)} by #{run.name}"
         else continue)
     .join('\n')
+
+exports.makeTable = (scores) ->
+    t = new AsciiTable()
+        .setHeading("Pos", "Score", "Name")
+        .setHeadingAlignRight('Pos')
+        .setHeadingAlignRight('Score')
+        .setHeadingAlignLeft('Name')
+
+    t.addRow(scoreObj.pos, scoreObj.score, scoreObj.name) for scoreObj from scores
+    t.toString()

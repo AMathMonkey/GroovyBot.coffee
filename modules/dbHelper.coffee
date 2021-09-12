@@ -3,6 +3,7 @@ sqlite = require 'sqlite'
 _ = require 'lodash'
 
 srcomHelper = require './srcomHelper'
+utilities = require './utilities'
 
 queries =
     createRuns: 
@@ -176,3 +177,39 @@ exports.updateUserCache = (runs) ->
 exports.getWRRuns = () ->
     db = await getdb()
     db.all(queries.getWRRuns)
+
+exports.getAllRuns = () ->
+    db = await getdb()
+    db.all("SELECT runs.*, users.name FROM runs INNER JOIN users ON runs.userid = users.userid")
+
+exports.updateScores = () ->
+    db = await getdb()
+    runs = await @getAllRuns()
+
+    result = {}
+    for run from runs
+        result[run.userid] ?= 0
+        result[run.userid] += utilities.calcScore(run.place)
+
+    Promise.all(for userid, score of result
+        db.run("REPLACE INTO scores (userid, score) VALUES (?, ?)", userid, score)
+    )
+
+exports.getScores = () ->
+    db = await getdb()
+    db.all("""
+        SELECT 
+            users.name, 
+            scores.score,
+            RANK () OVER (ORDER BY scores.score DESC) AS pos
+        FROM scores INNER JOIN users ON scores.userid = users.userid
+    """)
+
+exports.getOldTable = () ->
+    db = await getdb()
+    db.get("SELECT * FROM files WHERE filename = 'pointrankings'")
+        .then((obj) -> obj?.data)
+
+exports.saveTable = (tableString) ->
+    db = await getdb()
+    db.run("REPLACE INTO files (filename, data) VALUES ('pointrankings', ?)", tableString)

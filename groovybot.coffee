@@ -10,7 +10,9 @@ srcomHelper = require './modules/srcomHelper'
 
 client = new Client(intents: [Intents.FLAGS.GUILDS])
 
-pointRankingsTask = (channel) ->
+pointRankingsTask = (channelID) ->
+    channel = client.channels.resolve channelID
+
     console.log "Checking leaderboards @ #{new Date().toLocaleString()}"
     
     runs = await srcomHelper.getruns()
@@ -18,11 +20,31 @@ pointRankingsTask = (channel) ->
     runsWithNames = await dbHelper.addUsernames runs
     newRunsString = await utilities.getNewRunsString runsWithNames
 
-    if newRunsString
-        await dbHelper.insertRuns runs
-        console.log newRunsString
-    else
+    unless newRunsString
         console.log "No new runs"
+        return
+    
+    console.log "New runs found"
+    message = utilities.encloseInCodeBlock newRunsString
+    await dbHelper.insertRuns runs
+    await dbHelper.updateScores()
+    scores = await dbHelper.getScores()
+    table = utilities.makeTable scores
+    oldTable = await dbHelper.getOldTable()
+
+    if table is oldTable
+        console.log "But rankings unchanged"
+        message += utilities.encloseInCodeBlock "But rankings are unchanged"
+    else
+        console.log "Point rankings update"
+        message += utilities.encloseInCodeBlock "Point rankings update!\n" + table
+        await dbHelper.saveTable table
+
+    try
+        await channel.send message
+    catch error
+        console.log "Failed to send message; it was probably too long"
+        console.log message
     
     # message = await commandHelper.runsperplayer()
     # console.log utilities.encloseInCodeBlock message
@@ -45,8 +67,8 @@ client.once 'ready', () ->
     GROOVYBOT_CHANNEL_IDS.push groovytestChannel.id
     
     pointRankingsChannel = GROOVYBOT_CHANNEL_IDS[0]
-    pointRankingsTask(pointRankingsChannel)
-    setInterval(pointRankingsTask, 1.2e6 ### 20 minutes ###, pointRankingsChannel)
+    pointRankingsTask pointRankingsChannel
+    setInterval pointRankingsTask, 1.2e6 ### 20 minutes ###, pointRankingsChannel
 
 client.on 'interactionCreate', (i) ->
     return unless i.isCommand() and i.channelId in GROOVYBOT_CHANNEL_IDS
