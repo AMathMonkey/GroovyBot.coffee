@@ -37,4 +37,18 @@ exports.longeststanding = () ->
         "#{run.track} - #{run.category} in #{utilities.formatTime(run.time)} by #{run.name}, #{run.age} day#{if run.age is 1 then '' else 's'} old" for run from wrRuns...
     ].join('\n')
     
-        
+exports.pointrankings = () ->
+    dbHelper.getOldTable()
+
+exports.ilranking = (name, abbr) ->
+    return "Missing arguments! Need a user and a track/category abbreviation" unless name and abbr 
+    name = name.trim().toLowerCase()
+    abbr = abbr.trim().toLowerCase()
+
+    trackAndCategory = utilities.trackCategoryConverter(abbr)
+    return "Invalid category - please use track initials like cc or MMm100" unless trackAndCategory?
+
+    run = await dbHelper.getOneRunForILRanking({name, trackAndCategory...})
+
+    if run then "#{run.track} - #{run.category} in #{utilities.formatTime(run.time)} by #{run.name}, #{utilities.makeOrdinal(run.place)} place"
+    else "No run matching that username"

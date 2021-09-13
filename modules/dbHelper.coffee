@@ -52,7 +52,7 @@ queries =
             WHERE
                 category = :category
                 AND track = :track
-                AND lower(name) = lower(:name);
+                AND lower(name) = :name;
         """
 
     getOneRunForNewRuns: 
@@ -127,17 +127,17 @@ getdb = do () ->
             await db.exec(queries.createFiles)
         db
 
-runToDBQueryParam = (obj, arr) ->
+objToDBQueryParam = (obj, arr) ->
     _.fromPairs([":#{k}", v] for k, v of obj when k in arr)
 
 exports.insertRuns = (runs) ->
     db = await getdb()
     await db.run(queries.deleteAllRuns)
-    Promise.all(db.run(queries.insertRun, runToDBQueryParam(run, ["userid", "category", "track", "time", "date", "place"])) for run from runs)
+    Promise.all(db.run(queries.insertRun, objToDBQueryParam(run, ["userid", "category", "track", "time", "date", "place"])) for run from runs)
 
 exports.runInDB = (run) ->
     db = await getdb()
-    result = await db.get(queries.getOneRunForNewRuns, runToDBQueryParam(run, ["userid", "category", "track", "time", "date"]))
+    result = await db.get(queries.getOneRunForNewRuns, objToDBQueryParam(run, ["userid", "category", "track", "time", "date"]))
     result?
     
 exports.getNumberOfRunsPerPlayer = () ->
@@ -213,3 +213,7 @@ exports.getOldTable = () ->
 exports.saveTable = (tableString) ->
     db = await getdb()
     db.run("REPLACE INTO files (filename, data) VALUES ('pointrankings', ?)", tableString)
+
+exports.getOneRunForILRanking = (query) ->
+    db = await getdb()
+    db.get(queries.getOneRunForILRanking, objToDBQueryParam(query, ["track", "category", "name"]))

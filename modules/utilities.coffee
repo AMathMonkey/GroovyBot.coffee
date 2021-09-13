@@ -40,3 +40,19 @@ exports.makeTable = (scores) ->
 
     t.addRow(scoreObj.pos, scoreObj.score, scoreObj.name) for scoreObj from scores
     t.toString()
+
+exports.trackCategoryConverter = (abbr) ->
+    category = if abbr.endsWith('100') then "100 Points" else "Time Attack"
+
+    track = if abbr.startsWith('cc') then "Coventry Cove"
+    else if abbr.startsWith('mmm') then "Mount Mayhem"
+    else if abbr.startsWith('ii') then "Inferno Isle"
+    else if abbr.startsWith('ss') then "Sunset Sands"
+    else if abbr.startsWith('mms') then "Metro Madness"
+    else if abbr.startsWith('ww') then "Wicked Woods"
+    else null
+    return track unless track
+
+    return {category, track}
+
+    

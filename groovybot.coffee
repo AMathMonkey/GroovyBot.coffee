@@ -12,13 +12,22 @@ client = new Client(intents: [Intents.FLAGS.GUILDS])
 
 pointRankingsTask = (channelID) ->
     channel = client.channels.resolve channelID
-
     console.log "Checking leaderboards @ #{new Date().toLocaleString()}"
     
     runs = await srcomHelper.getruns()
     await dbHelper.updateUserCache runs
     runsWithNames = await dbHelper.addUsernames runs
     newRunsString = await utilities.getNewRunsString runsWithNames
+
+    # # A BUNCH OF TESTS TO REMOVE LATER
+    # message = await commandHelper.ilranking("AMathMonkey", "mmm")
+    # console.log utilities.encloseInCodeBlock message
+    # message = await commandHelper.runsperplayer()
+    # console.log utilities.encloseInCodeBlock message
+    # message = await commandHelper.newestruns(3)
+    # console.log utilities.encloseInCodeBlock message
+    # message = await commandHelper.longeststanding()
+    # console.log utilities.encloseInCodeBlock message
 
     unless newRunsString
         console.log "No new runs"
@@ -45,13 +54,6 @@ pointRankingsTask = (channelID) ->
     catch error
         console.log "Failed to send message; it was probably too long"
         console.log message
-    
-    # message = await commandHelper.runsperplayer()
-    # console.log utilities.encloseInCodeBlock message
-    # message = await commandHelper.newestruns(3)
-    # console.log utilities.encloseInCodeBlock message
-    # message = await commandHelper.longeststanding()
-    # console.log utilities.encloseInCodeBlock message
 
 GROOVYBOT_CHANNEL_IDS = []
 client.once 'ready', () -> 
@@ -76,8 +78,24 @@ client.on 'interactionCreate', (i) ->
     switch i.commandName
         when 'ping' then await i.reply 'Pong!' 
 
+        when 'newestruns'
+            message = await commandHelper.newestruns(i.options.getInteger('numruns'))
+            i.reply(utilities.encloseInCodeBlock message)
+
         when 'runsperplayer'
-            message = await commandHelper.getNumberOfRunsPerPlayer()
+            message = await commandHelper.runsperplayer()
+            i.reply(utilities.encloseInCodeBlock message)
+
+        when 'longeststanding'
+            message = await commandHelper.longeststanding()
+            i.reply(utilities.encloseInCodeBlock message)
+
+        when 'pointrankings'
+            message = await commandHelper.pointrankings()
+            i.reply(utilities.encloseInCodeBlock message)
+
+        when 'ilranking'
+            message = await commandHelper.ilranking(i.options.getString('name') or '', i.options.getString('abbr') or '')
             i.reply(utilities.encloseInCodeBlock message)
         
 client.login process.env.DISCORD_TOKEN
