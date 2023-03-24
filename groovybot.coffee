@@ -21,28 +21,27 @@ pointRankingsTask = (channelID) ->
     runsWithNames = await dbHelper.addUsernames runs
     newRunsString = await dbHelper.getNewRunsString runsWithNames
 
-    unless newRunsString
-        console.log "No new runs"
-        return
-    
-    console.log "New runs found"
-    message = utilities.encloseInCodeBlock newRunsString
-    await dbHelper.insertRuns runs
-    await dbHelper.updateScores()
-    scores = await dbHelper.getScores()
-    table = utilities.makeTable scores
-    oldTable = await dbHelper.getPointRankings()
+    if newRunsString
+        console.log "New runs found"
+        message = utilities.encloseInCodeBlock newRunsString
+        await dbHelper.insertRuns runs
+        await dbHelper.updateScores()
+        scores = await dbHelper.getScores()
+        table = utilities.makeTable scores
+        oldTable = await dbHelper.getPointRankings()
 
-    if table is oldTable
-        console.log "But rankings unchanged"
-        message += utilities.encloseInCodeBlock "But rankings are unchanged"
-    else
-        console.log "Point rankings update"
-        message += utilities.encloseInCodeBlock "Point rankings update!\n#{table}"
-        await dbHelper.saveTable table
+        if table is oldTable
+            console.log "But rankings unchanged"
+            message += utilities.encloseInCodeBlock "But rankings are unchanged"
+        else
+            console.log "Point rankings update"
+            message += utilities.encloseInCodeBlock "Point rankings update!\n#{table}"
+            await dbHelper.saveTable table
 
-    try await channel.send message
-    catch error then console.log "Failed to send message; it was probably too long. Message was:\n#{message}"
+        try await channel.send message
+        catch error then console.log "Failed to send message; it was probably too long. Message was:\n#{message}"
+        
+    else console.log "No new runs"
 
     # schedules itself to run again in 20 minutes
     setInterval pointRankingsTask, 1.2e6 ### 20 minutes ###, channelID
