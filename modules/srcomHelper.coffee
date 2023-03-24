@@ -1,42 +1,43 @@
 fetch = require 'node-fetch'
-_ = require 'lodash'
 
-ids = 
+ids = {
     game: 'w6j992dj'
-    categories:
+    categories: {
         'Time Attack': 'z27w7ok0'
         '100 Points': 'wk6gyrd1'
-    tracks: 
+    }
+    tracks: {
         'Coventry Cove': 'rw632nw7'
         'Mount Mayhem': 'n93ok790'
         'Inferno Isle': 'z98np79l'
         'Sunset Sands': 'rdnn3ndm'
         'Metro Madness': 'ldy2qjw3'
         'Wicked Woods': 'gdr2r89z'
+    }
+}
 
 getOneLeaderboard = (track, category) ->
     fetch "https://www.speedrun.com/api/v1/leaderboards/#{ids.game}/level/#{ids.tracks[track]}/#{ids.categories[category]}"
-        .then((response) => response.json())
-        .then((json) => 
-            for run from json.data.runs
-                {
-                    track: track
-                    category: category
-                    place: run.place
-                    userid: run.run.players[0].id
-                    date: run.run.date
-                    time: run.run.times.primary
-                }
+        .then((response) -> response.json())
+        .then((json) ->
+            {
+                track: track
+                category: category
+                place: run.place
+                userid: run.run.players[0].id
+                date: run.run.date
+                time: run.run.times.primary
+            } for run in json.data.runs
         )
 
-exports.getruns = () ->
+exports.getRuns = ->
     boards = []
     for category of ids.categories
         for track of ids.tracks
             boards.push getOneLeaderboard(track, category)
-    _.flatten await Promise.all boards
+    (await Promise.all boards).flat()
 
 exports.getUsername = (userid) ->
     fetch "https://www.speedrun.com/api/v1/users/#{userid}"
-    .then((response) => response.json())
-    .then((json) => json.data.names.international)
+    .then((response) -> response.json())
+    .then((json) -> json.data.names.international)
