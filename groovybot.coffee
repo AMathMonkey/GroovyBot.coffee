@@ -18,7 +18,7 @@ pointRankingsTask = (channelID) ->
     
     runs = await srcomHelper.getRuns()
     await dbHelper.updateUserCache runs
-    runsWithNames = await dbHelper.addUsernames runs
+    runsWithNames = await dbHelper.getRunsWithUsernames runs
     newRunsString = await dbHelper.getNewRunsString runsWithNames
 
     if newRunsString
@@ -67,28 +67,17 @@ client.on 'interactionCreate', (i) ->
     return unless i.isCommand() and i.channelId in GROOVYBOT_CHANNEL_IDS
     console.log "#{getDate()}: Recieved command #{i.commandName} from user #{i.user.username}"
 
-    switch i.commandName
-        when 'newestruns'
-            message = await commandHelper.newestruns(i.options.getInteger('numruns'))
-            i.reply(utilities.encloseInCodeBlock message)
+    message = await switch i.commandName
+        when 'newestruns' then commandHelper.newestruns(i.options.getInteger('numruns'))
+        when 'runsperplayer' then commandHelper.runsperplayer()
+        when 'longeststanding' then commandHelper.longeststanding()
+        when 'pointrankings' then commandHelper.pointrankings()
+        when 'ilranking' then commandHelper.ilranking(
+            i.options.getString('name') or ''
+            i.options.getString('abbr') or ''
+        )
+    
+    i.reply(utilities.encloseInCodeBlock message)
+    return
 
-        when 'runsperplayer'
-            message = await commandHelper.runsperplayer()
-            i.reply(utilities.encloseInCodeBlock message)
-
-        when 'longeststanding'
-            message = await commandHelper.longeststanding()
-            i.reply(utilities.encloseInCodeBlock message)
-
-        when 'pointrankings'
-            message = await commandHelper.pointrankings()
-            i.reply(utilities.encloseInCodeBlock message)
-
-        when 'ilranking'
-            message = await commandHelper.ilranking(
-                i.options.getString('name') or ''
-                i.options.getString('abbr') or ''
-            )
-            i.reply(utilities.encloseInCodeBlock message)
-        
 client.login process.env.DISCORD_TOKEN

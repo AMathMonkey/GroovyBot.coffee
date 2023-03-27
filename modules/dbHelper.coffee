@@ -166,7 +166,7 @@ exports.getNewestRuns = (numruns) ->
     db = await getdb()
     db.all(queries.getNewestRuns, numruns)
 
-exports.addUsernames = (runs) ->
+exports.getRunsWithUsernames = (runs) ->
     db = await getdb()
     {
         run...
@@ -176,7 +176,8 @@ exports.addUsernames = (runs) ->
 exports.updateUserCache = (runs) ->
     db = await getdb()
     currentDate = new Date()
-    Promise.all(for userid in runs.map((x) -> x.userid)
+    userids = [new Set(run.userid for run in runs)...]
+    Promise.all(for userid in userids
         do (userid) -> # this is needed or you get weird var-related misbehaviour
             db.get(queries.getUsernameAge, userid).then((result) ->
                 unless result? and (currentDate - new Date(result.date)) < 604800000 # 1 week in milliseconds
