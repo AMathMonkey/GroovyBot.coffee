@@ -44,7 +44,8 @@ pointRankingsTask = (channelID) ->
     else console.log "No new runs"
 
     # schedules itself to run again in 20 minutes
-    setInterval pointRankingsTask, 1.2e6 ### 20 minutes ###, channelID
+    setTimeout pointRankingsTask, 1.2e6 ### 20 minutes ###, channelID
+    return
 
 GROOVYBOT_CHANNEL_IDS = []
 client.once 'ready', ->
