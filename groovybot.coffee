@@ -12,6 +12,8 @@ client = new Client({ intents: [Intents.FLAGS.GUILDS] })
 
 getDate = -> new Date().toUTCString()
 
+POINT_RANKINGS_DELAY = 60 * 60 * 1000 # 1 hour
+
 pointRankingsTask = (channelID) ->
     channel = client.channels.resolve channelID
     console.log "#{getDate()}: Checking leaderboards"
@@ -23,7 +25,7 @@ pointRankingsTask = (channelID) ->
 
     if newRunsString
         console.log "New runs found"
-        message = utilities.encloseInCodeBlock newRunsString
+        message = [utilities.encloseInCodeBlock newRunsString]
         await dbHelper.insertRuns runs
         await dbHelper.updateScores()
         scores = await dbHelper.getScores()
@@ -32,19 +34,19 @@ pointRankingsTask = (channelID) ->
 
         if table is oldTable
             console.log "But rankings unchanged"
-            message += utilities.encloseInCodeBlock "But rankings are unchanged"
+            message.push utilities.encloseInCodeBlock "But rankings are unchanged"
         else
             console.log "Point rankings update"
-            message += utilities.encloseInCodeBlock "Point rankings update!\n#{table}"
+            message.push utilities.encloseInCodeBlock "Point rankings update!\n#{table}"
             await dbHelper.saveTable table
 
-        try await channel.send message
-        catch error then console.log "Failed to send message; it was probably too long. Message was:\n#{message}"
+        try await channel.send message.join ''
+        catch then console.log "Failed to send message; it was probably too long. Message was:\n#{message}"
         
     else console.log "No new runs"
 
-    # schedules itself to run again in 20 minutes
-    setTimeout pointRankingsTask, 1.2e6 ### 20 minutes ###, channelID
+    # schedules itself to run again after delay
+    setTimeout pointRankingsTask, POINT_RANKINGS_DELAY, channelID
     return
 
 GROOVYBOT_CHANNEL_IDS = []
