@@ -51,19 +51,19 @@ pointRankingsTask = (channelID) ->
 
 GROOVYBOT_CHANNEL_IDS = []
 client.once 'ready', ->
+    modeIsProd = process.env.MODE is 'PROD'
     console.log "#{getDate()}: Logged in as #{client.user.tag}!"
-    groovybotChannel = client.channels.cache.find((x) -> x.name is "groovybot")
-    groovytestChannel = client.channels.cache.find((x) -> x.name is "groovytest")
+    groovybotChannel = client.channels.cache.find (x) -> x.name is "groovybot"
+    groovytestChannel = client.channels.cache.find (x) -> x.name is "groovytest"
     
-    if process.env.MODE is 'PROD'
-        console.log 'Running in production mode'
-        GROOVYBOT_CHANNEL_IDS.push groovybotChannel.id
-    else console.log 'Running in test mode'
+    console.log "Running in #{if modeIsProd then 'production' else 'test'} mode"
 
-    GROOVYBOT_CHANNEL_IDS.push groovytestChannel.id
+    GROOVYBOT_CHANNEL_IDS = [
+        (if modeIsProd then [groovybotChannel] else [])...
+        groovytestChannel
+    ]
     
-    pointRankingsChannel = GROOVYBOT_CHANNEL_IDS[0]
-    pointRankingsTask pointRankingsChannel
+    pointRankingsTask GROOVYBOT_CHANNEL_IDS[0]
     
 
 client.on 'interactionCreate', (i) ->
