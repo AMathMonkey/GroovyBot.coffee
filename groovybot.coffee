@@ -14,8 +14,8 @@ getDate = -> new Date().toUTCString()
 
 POINT_RANKINGS_DELAY = 60 * 60 * 1000 # 1 hour
 
-pointRankingsTask = (channelID) ->
-    channel = client.channels.resolve channelID
+pointRankingsTask = (channelId) ->
+    channel = client.channels.resolve channelId
     console.log "#{getDate()}: Checking leaderboards"
     
     runs = await srcomHelper.getRuns()
@@ -46,10 +46,10 @@ pointRankingsTask = (channelID) ->
     else console.log "No new runs"
 
     # schedules itself to run again after delay
-    setTimeout pointRankingsTask, POINT_RANKINGS_DELAY, channelID
+    setTimeout pointRankingsTask, POINT_RANKINGS_DELAY, channelId
     return
 
-GROOVYBOT_CHANNEL_IDS = []
+allowedChannelIds = []
 client.once 'ready', ->
     modeIsProd = process.env.MODE is 'PROD'
     console.log "#{getDate()}: Logged in as #{client.user.tag}!"
@@ -58,16 +58,16 @@ client.once 'ready', ->
     
     console.log "Running in #{if modeIsProd then 'production' else 'test'} mode"
 
-    GROOVYBOT_CHANNEL_IDS = [
-        (if modeIsProd then [groovybotChannel] else [])...
-        groovytestChannel
+    allowedChannelIds = [
+        (if modeIsProd then [groovybotChannel.id] else [])...
+        groovytestChannel.id
     ]
     
-    pointRankingsTask GROOVYBOT_CHANNEL_IDS[0]
+    pointRankingsTask allowedChannelIds[0]
     
 
 client.on 'interactionCreate', (i) ->
-    return unless i.isCommand() and i.channelId in GROOVYBOT_CHANNEL_IDS
+    return unless i.isCommand() and i.channelId in allowedChannelIds
     console.log "#{getDate()}: Recieved command #{i.commandName} from user #{i.user.username}"
 
     message = await switch i.commandName
@@ -80,7 +80,7 @@ client.on 'interactionCreate', (i) ->
             i.options.getString('abbr') or ''
         )
     
-    i.reply(utilities.encloseInCodeBlock message)
+    i.reply utilities.encloseInCodeBlock message
     return
 
 client.login process.env.DISCORD_TOKEN
