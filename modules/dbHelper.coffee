@@ -84,10 +84,10 @@ queries = {
     deleteAllRuns: "DELETE FROM runs"
 
     getNumberOfRunsPerPlayer: """
-        SELECT name, count(name) AS c
+        SELECT name, count(name) AS count
         FROM runsView
         GROUP BY name
-        ORDER BY c DESC
+        ORDER BY count DESC
     """
 
     getNewestRuns: "SELECT * from runsView ORDER BY date DESC LIMIT ?"
