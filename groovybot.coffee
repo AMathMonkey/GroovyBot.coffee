@@ -2,7 +2,6 @@ require('dotenv').config()
 require 'coffeescript/register'
 
 { Client, Intents } = require 'discord.js'
-{ Mutex } = require 'async-mutex'
 
 POINT_RANKINGS_DELAY = 60 * 60 * 1000 # 1 hour
 
@@ -13,13 +12,6 @@ srcomHelper = require './modules/srcomHelper'
 
 client = new Client({ intents: [Intents.FLAGS.GUILDS] })
 
-# pointRankingsTask can use this to lock the DB when updating it
-# so that if someone runs a command at the same time, it will wait
-# for the DB to be in a usable state
-dbMutex = new Mutex
-# Start by locking it so commands can't be run before basic startup
-await dbMutex.acquire()
-
 getDate = -> new Date().toUTCString()
 
 pointRankingsTask = (channelId) ->
@@ -27,17 +19,15 @@ pointRankingsTask = (channelId) ->
     console.log "#{getDate()}: Checking leaderboards"
     
     runs = await srcomHelper.getRuns()
-    await dbMutex.runExclusive -> dbHelper.updateUserCache runs
+    await dbHelper.updateUserCache runs
     runsWithNames = await dbHelper.getRunsWithUsernames runs
     newRunsString = await dbHelper.getNewRunsString runsWithNames
 
     if newRunsString
         console.log "New runs found"
         message = [utilities.encloseInCodeBlock newRunsString]
-        await dbMutex.runExclusive ->
-            await dbHelper.insertRuns runs
-            await dbHelper.updateScores()
-            return
+        await dbHelper.insertRuns runs
+        await dbHelper.updateScores()
         scores = await dbHelper.getScores()
         table = utilities.makeTable scores
         oldTable = await dbHelper.getPointRankings()
@@ -74,30 +64,24 @@ client.once 'ready', ->
         groovytestChannel.id
     ]
     
-    dbMutex.release() # unlock now that we're set up
-    pointRankingsTask allowedChannelIds[0]
-    
+    await pointRankingsTask allowedChannelIds[0]
+    # Only add this event handler after pointRankingsTask runs for the first time
+    client.on 'interactionCreate', (i) ->
+        return unless i.isCommand() and i.channelId in allowedChannelIds
+        console.log "#{getDate()}: Recieved command #{i.commandName} from user #{i.user.username}"
 
-client.on 'interactionCreate', (i) ->
-    return unless i.isCommand() and i.channelId in allowedChannelIds
-    console.log "#{getDate()}: Recieved command #{i.commandName} from user #{i.user.username}"
-
-    if dbMutex.isLocked()
-        console.log "Need to wait for dbMutex to be unlocked!"
-        await dbMutex.waitForUnlock()
-
-    message = await switch i.commandName
-        when 'newestruns' then commandHelper.newestruns(i.options.getInteger('numruns'))
-        when 'runsperplayer' then commandHelper.runsperplayer()
-        when 'longeststanding' then commandHelper.longeststanding()
-        when 'pointrankings' then commandHelper.pointrankings()
-        when 'ilranking' then commandHelper.ilranking(
-            i.options.getString('name')
-            i.options.getString('abbr')
-        )
-    
-    await i.reply utilities.encloseInCodeBlock message
-    console.log "#{getDate()}: Sent reply successfully!"
-    return
+        message = await switch i.commandName
+            when 'newestruns' then commandHelper.newestruns(i.options.getInteger('numruns'))
+            when 'runsperplayer' then commandHelper.runsperplayer()
+            when 'longeststanding' then commandHelper.longeststanding()
+            when 'pointrankings' then commandHelper.pointrankings()
+            when 'ilranking' then commandHelper.ilranking(
+                i.options.getString('name')
+                i.options.getString('abbr')
+            )
+        
+        await i.reply utilities.encloseInCodeBlock message
+        console.log "#{getDate()}: Sent reply successfully!"
+        return
 
 client.login process.env.DISCORD_TOKEN
