@@ -10,7 +10,7 @@ exports.formatTime = (timeString) ->
 exports.makeOrdinal = (n) ->
     suffix = if 11 <= (n % 100) <= 13 then "th"
     else ["th", "st", "nd", "rd", "th"][Math.min(n % 10, 4)]
-    n.concat(suffix)
+    String(n).concat(suffix)
 
 exports.calcScore = (placing) ->
     switch placing
