@@ -1,4 +1,5 @@
 fetch = require 'node-fetch'
+utilities = require './utilities'
 
 ids = {
     game: 'w6j992dj'
@@ -23,10 +24,9 @@ getOneLeaderboard = (track, category) ->
             {
                 track: track
                 category: category
-                place: run.place
                 userid: run.run.players[0].id
                 date: run.run.date
-                time: run.run.times.primary
+                time: utilities.formatTime(run.run.times.primary)
             } for run in json.data.runs
         )
 

@@ -21,14 +21,14 @@ exports.newestruns = (numruns) ->
 
     [
         header,
-        "#{run.track} - #{run.category} in #{utilities.formatTime(run.time)} by #{run.name}, #{utilities.makeOrdinal(run.place)} place" for run in result...
+        "#{run.track} - #{run.category} in #{run.time} by #{run.name}, #{utilities.makeOrdinal(run.place)} place" for run in result...
     ].join('\n')
 
 exports.longeststanding = ->
     wrRuns = await dbHelper.getLongestStandingWRRuns()
     [
         "WR runs sorted by longest standing:\n"
-        "#{run.track} - #{run.category} in #{utilities.formatTime(run.time)} by #{run.name}, #{run.age} day#{if run.age is 1 then '' else 's'} old" for run in wrRuns...
+        "#{run.track} - #{run.category} in #{run.time} by #{run.name}, #{run.age} day#{if run.age is 1 then '' else 's'} old" for run in wrRuns...
     ].join('\n')
     
 exports.pointrankings = dbHelper.getPointRankings
@@ -42,5 +42,5 @@ exports.ilranking = (name, abbr) ->
 
     run = await dbHelper.getOneRunForILRanking({ name, trackAndCategory... })
 
-    if run then "#{run.track} - #{run.category} in #{utilities.formatTime(run.time)} by #{run.name}, #{utilities.makeOrdinal(run.place)} place"
+    if run then "#{run.track} - #{run.category} in #{run.time} by #{run.name}, #{utilities.makeOrdinal(run.place)} place"
     else "No run matching that username"

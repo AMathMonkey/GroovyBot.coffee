@@ -1,8 +1,7 @@
 tinyduration = require 'tinyduration'
 AsciiTable = require 'ascii-table'
 
-exports.encloseInCodeBlock = (message) ->
-    "```\n#{message}\n```"
+exports.encloseInCodeBlock = (message) -> "```\n#{message}\n```"
 
 exports.formatTime = (timeString) ->
     timeObj = tinyduration.parse timeString
@@ -11,16 +10,13 @@ exports.formatTime = (timeString) ->
 exports.makeOrdinal = (n) ->
     suffix = if 11 <= (n % 100) <= 13 then "th"
     else ["th", "st", "nd", "rd", "th"][Math.min(n % 10, 4)]
-    n + suffix
+    n.concat(suffix)
 
 exports.calcScore = (placing) ->
     switch placing
         when 1 then 100
         when 2 then 97
         else Math.max(0, 98 - placing)
-
-exports.daysSince = (dateString) ->
-    Math.ceil( ((new Date) - (new Date(dateString))) / 8.64e7 )
 
 exports.makeTable = (scores) ->
     t = new AsciiTable()
@@ -42,8 +38,5 @@ exports.trackCategoryConverter = (abbr) ->
     else if abbr.startsWith('mms') then "Metro Madness"
     else if abbr.startsWith('ww') then "Wicked Woods"
     else null
-    return track unless track
 
-    return { category, track }
-
-    
+    if track? then { category, track } else null

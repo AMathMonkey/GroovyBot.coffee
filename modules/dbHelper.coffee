@@ -12,8 +12,7 @@ queries = {
             track TEXT NOT NULL,
             time TEXT NOT NULL,
             date TEXT NOT NULL,
-            place INTEGER NOT NULL,
-            PRIMARY KEY (userid, category, track, time, date)
+            PRIMARY KEY (userid, category, track)
         )
     """
 
@@ -43,7 +42,7 @@ queries = {
     createRunsView: """
         CREATE VIEW IF NOT EXISTS runsView
         AS
-        SELECT runs.*, users.name FROM runs
+        SELECT runs.*, users.name, RANK() OVER(PARTITION BY category, track ORDER BY time) AS place FROM runs
         INNER JOIN users USING(userid)
     """
 
@@ -68,8 +67,8 @@ queries = {
     getAllRuns: "SELECT * from runsView"
 
     insertRun: """
-        REPLACE INTO runs (userid, category, track, time, date, place)
-            VALUES (:userid, :category, :track, :time, :date, :place)
+        REPLACE INTO runs (userid, category, track, time, date)
+            VALUES (:userid, :category, :track, :time, :date)
     """
 
     insertScore: """
@@ -133,17 +132,16 @@ getdb = do ->
                 await db.run(queries[query])
         db
 
-objToDBQueryParam = (obj, arr) ->
-    s = new Set arr
+objToNamedQueryParameters = (obj, fieldsToUse) ->
+    s = new Set fieldsToUse
     Object.fromEntries([":#{k}", v] for k, v of obj when s.has(k))
 
 exports.insertRuns = (runs) ->
     db = await getdb()
-    await db.run(queries.deleteAllRuns)
     Promise.all(
         db.run(
             queries.insertRun
-            objToDBQueryParam(run, ["userid", "category", "track", "time", "date", "place"])
+            objToNamedQueryParameters(run, ["userid", "category", "track", "time", "date"])
         ) for run in runs
     )
 
@@ -151,7 +149,7 @@ exports.runInDB = (run) ->
     db = await getdb()
     result = await db.get(
         queries.getOneRunForNewRuns
-        objToDBQueryParam(run, ["userid", "category", "track", "time", "date"])
+        objToNamedQueryParameters(run, ["userid", "category", "track", "time", "date"])
     )
     result?
     
@@ -219,11 +217,10 @@ exports.saveTable = (tableString) ->
 
 exports.getOneRunForILRanking = (query) ->
     db = await getdb()
-    db.get(queries.getOneRunForILRanking, objToDBQueryParam(query, ["track", "category", "name"]))
+    db.get(queries.getOneRunForILRanking, objToNamedQueryParameters(query, ["track", "category", "name"]))
 
 exports.getNewRunsString = (runs) ->
     (for run in runs
-        runInDB = await @runInDB run
-        if runInDB then continue
-        else "New run! #{run.track} - #{run.category} in #{utilities.formatTime(run.time)} by #{run.name}")
+        if await @runInDB run then continue
+        else "New run! #{run.track} - #{run.category} in #{run.time} by #{run.name}")
     .join('\n')
