@@ -194,10 +194,10 @@ exports.updateScores = ->
     runs = await @getAllRuns()
 
     result = runs.reduce(
-        (acc, run) -> ({
+        (acc, run) -> {
             acc...,
             [run.userid]: (acc[run.userid] ? 0) + utilities.calcScore(run.place)
-        }),
+        }
         {}
     )
 
