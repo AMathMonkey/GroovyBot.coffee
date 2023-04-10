@@ -91,8 +91,8 @@ client.on 'interactionCreate', (i) ->
         when 'longeststanding' then commandHelper.longeststanding()
         when 'pointrankings' then commandHelper.pointrankings()
         when 'ilranking' then commandHelper.ilranking(
-            i.options.getString('name') or ''
-            i.options.getString('abbr') or ''
+            i.options.getString('name')
+            i.options.getString('abbr')
         )
     
     await i.reply utilities.encloseInCodeBlock message

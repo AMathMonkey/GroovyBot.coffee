@@ -9,9 +9,7 @@ exports.runsperplayer = ->
     ].join("\n")
 
 exports.newestruns = (numruns) ->
-    invalidArg = false
-    numruns = parseInt(numruns, 10)
-    if numruns is NaN or not (1 <= numruns <= 10)
+    unless numruns? and (1 <= numruns <= 10)
         invalidArg = true
         numruns = 5
 
@@ -27,23 +25,17 @@ exports.newestruns = (numruns) ->
     ].join('\n')
 
 exports.longeststanding = ->
-    wrRuns = await dbHelper.getWRRuns()
-    for run in wrRuns
-        run.age = utilities.daysSince(run.date)
-    wrRuns.sort((run1, run2) -> run2.age - run1.age)
-
+    wrRuns = await dbHelper.getLongestStandingWRRuns()
     [
         "WR runs sorted by longest standing:\n"
         "#{run.track} - #{run.category} in #{utilities.formatTime(run.time)} by #{run.name}, #{run.age} day#{if run.age is 1 then '' else 's'} old" for run in wrRuns...
     ].join('\n')
     
-exports.pointrankings = ->
-    dbHelper.getPointRankings()
+exports.pointrankings = dbHelper.getPointRankings
 
 exports.ilranking = (name, abbr) ->
-    return "Missing arguments! Need a user and a track/category abbreviation" unless name and abbr
-    name = name.trim().toLowerCase()
-    abbr = abbr.trim().toLowerCase()
+    name = (name ? '').trim().toLowerCase()
+    abbr = (abbr ? '').trim().toLowerCase()
 
     trackAndCategory = utilities.trackCategoryConverter(abbr)
     return "Invalid category - please use track initials like cc or MMm100" unless trackAndCategory?

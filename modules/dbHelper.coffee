@@ -44,7 +44,7 @@ queries = {
         CREATE VIEW IF NOT EXISTS runsView
         AS
         SELECT runs.*, users.name FROM runs
-        INNER JOIN users USING(userid);
+        INNER JOIN users USING(userid)
     """
 
     getOneRunForILRanking: """
@@ -69,15 +69,18 @@ queries = {
 
     insertRun: """
         REPLACE INTO runs (userid, category, track, time, date, place)
-            VALUES (:userid, :category, :track, :time, :date, :place);
+            VALUES (:userid, :category, :track, :time, :date, :place)
     """
 
     insertScore: """
         INSERT INTO scores (userid, score)
-            VALUES (:userid, :score);
+            VALUES (:userid, :score)
     """
 
-    getWRRuns: "SELECT * from runsView WHERE place = 1"
+    getLongestStandingWRRuns: """
+        SELECT *, FLOOR(JULIANDAY('now') - JULIANDAY(date)) AS age
+        FROM runsView WHERE place = 1 ORDER BY date
+    """
 
     deleteAllRuns: "DELETE FROM runs"
 
@@ -88,7 +91,7 @@ queries = {
         ORDER BY c DESC
     """
 
-    getNewestRuns: "SELECT * from runsView ORDER BY date DESC LIMIT ?;"
+    getNewestRuns: "SELECT * from runsView ORDER BY date DESC LIMIT ?"
     
     replacePointRankings: 
         "REPLACE INTO files (filename, data) VALUES ('pointrankings', ?)"
@@ -104,7 +107,8 @@ queries = {
             users.name,
             scores.score,
             RANK() OVER (ORDER BY scores.score DESC) AS pos
-        FROM scores INNER JOIN users ON scores.userid = users.userid
+        FROM scores
+        INNER JOIN users USING(userid)
     """
 
     isUsernameCached: """
@@ -179,9 +183,9 @@ exports.updateUserCache = (runs) ->
             )
     )
 
-exports.getWRRuns = ->
+exports.getLongestStandingWRRuns = ->
     db = await getdb()
-    db.all(queries.getWRRuns)
+    db.all(queries.getLongestStandingWRRuns)
 
 exports.getAllRuns = ->
     db = await getdb()
