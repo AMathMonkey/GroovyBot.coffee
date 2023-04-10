@@ -1,5 +1,14 @@
 tinyduration = require 'tinyduration'
-AsciiTable = require 'ascii-table'
+{ AsciiTable3, AlignmentEnum } = require 'ascii-table3'
+
+TRACK_ABBR_MAPPINGS = [
+    ['cc', 'Coventry Cove'],
+    ['mmm', 'Mount Mayhem'],
+    ['ii', 'Inferno Isle'],
+    ['ss', 'Sunset Sands'],
+    ['mms', 'Metro Madness'],
+    ['ww', "Wicked Woods"]
+]
 
 exports.encloseInCodeBlock = (message) -> "```\n#{message}\n```"
 
@@ -19,24 +28,15 @@ exports.calcScore = (placing) ->
         else Math.max(0, 98 - placing)
 
 exports.makeTable = (scores) ->
-    t = new AsciiTable()
+    new AsciiTable3()
         .setHeading("Pos", "Score", "Name")
-        .setHeadingAlignRight('Pos')
-        .setHeadingAlignRight('Score')
-        .setHeadingAlignLeft('Name')
-
-    t.addRow(scoreObj.pos, scoreObj.score, scoreObj.name) for scoreObj in scores
-    t.toString()
+        .setAligns([AlignmentEnum.RIGHT, AlignmentEnum.RIGHT, AlignmentEnum.LEFT])
+        .addRowMatrix([s.pos, s.score, s.name] for s in scores)
+        .toString()
 
 exports.trackCategoryConverter = (abbr) ->
     category = if abbr.endsWith('100') then "100 Points" else "Time Attack"
 
-    track = if abbr.startsWith('cc') then "Coventry Cove"
-    else if abbr.startsWith('mmm') then "Mount Mayhem"
-    else if abbr.startsWith('ii') then "Inferno Isle"
-    else if abbr.startsWith('ss') then "Sunset Sands"
-    else if abbr.startsWith('mms') then "Metro Madness"
-    else if abbr.startsWith('ww') then "Wicked Woods"
-    else null
+    mapping = TRACK_ABBR_MAPPINGS.find (m) -> abbr.startsWith m[0]
 
-    if track? then { category, track } else null
+    { category, track: mapping[1] } if mapping?

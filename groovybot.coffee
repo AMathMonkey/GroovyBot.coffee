@@ -50,7 +50,8 @@ pointRankingsTask = (channelId) ->
             message.push utilities.encloseInCodeBlock "Point rankings update!\n#{table}"
             await dbHelper.saveTable table
 
-        try await channel.send message.join ''
+        message = message.join ''
+        try await channel.send message
         catch then console.log "Failed to send message; it was probably too long. Message was:\n#{message}"
         
     else console.log "No new runs"

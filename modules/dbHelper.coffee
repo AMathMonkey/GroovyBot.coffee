@@ -193,10 +193,13 @@ exports.updateScores = ->
     db = await getdb()
     runs = await @getAllRuns()
 
-    result = {}
-    for run in runs
-        result[run.userid] ?= 0
-        result[run.userid] += utilities.calcScore(run.place)
+    result = runs.reduce(
+        (acc, run) -> ({
+            acc...,
+            [run.userid]: (acc[run.userid] ? 0) + utilities.calcScore(run.place)
+        }),
+        {}
+    )
 
     Promise.all(for userid, score of result
         db.run(queries.updateScore, userid, score)
@@ -208,8 +211,7 @@ exports.getScores = ->
 
 exports.getPointRankings = ->
     db = await getdb()
-    db.get(queries.getPointRankings)
-        .then((obj) -> obj?.data)
+    db.get(queries.getPointRankings).then((obj) -> obj?.data)
 
 exports.saveTable = (tableString) ->
     db = await getdb()
