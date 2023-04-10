@@ -5,7 +5,7 @@ srcomHelper = require './srcomHelper'
 utilities = require './utilities'
 
 queries = {
-    createRuns: """
+    createRuns: "
         CREATE TABLE IF NOT EXISTS runs (
             userid TEXT NOT NULL,
             category TEXT NOT NULL,
@@ -14,47 +14,47 @@ queries = {
             date TEXT NOT NULL,
             PRIMARY KEY (userid, category, track)
         )
-    """
+    "
 
-    createUsers: """
+    createUsers: "
         CREATE TABLE IF NOT EXISTS users (
             userid TEXT NOT NULL,
             name TEXT NOT NULL,
             date TEXT NOT NULL,
             PRIMARY KEY (userid)
         )
-    """
+    "
 
-    createScores: """
+    createScores: "
         CREATE TABLE IF NOT EXISTS scores (
             userid TEXT PRIMARY KEY NOT NULL,
             score INTEGER NOT NULL
         )
-    """
+    "
 
-    createFiles: """
+    createFiles: "
         CREATE TABLE IF NOT EXISTS files (
             filename TEXT PRIMARY KEY NOT NULL,
             data BLOB NOT NULL
         )
-    """
+    "
 
-    createRunsView: """
+    createRunsView: "
         CREATE VIEW IF NOT EXISTS runsView
         AS
         SELECT runs.*, users.name, RANK() OVER(PARTITION BY category, track ORDER BY time) AS place FROM runs
         INNER JOIN users USING(userid)
-    """
+    "
 
-    getOneRunForILRanking: """
+    getOneRunForILRanking: "
         SELECT * from runsView
         WHERE
             category = :category
             AND track = :track
             AND lower(name) = :name
-    """
+    "
 
-    getOneRunForNewRuns: """
+    getOneRunForNewRuns: "
         SELECT * FROM runs
         WHERE
             track = :track
@@ -62,33 +62,33 @@ queries = {
             AND time = :time
             AND userid = :userid
             AND date = :date
-    """
+    "
 
     getAllRuns: "SELECT * from runsView"
 
-    insertRun: """
+    insertRun: "
         REPLACE INTO runs (userid, category, track, time, date)
             VALUES (:userid, :category, :track, :time, :date)
-    """
+    "
 
-    insertScore: """
+    insertScore: "
         INSERT INTO scores (userid, score)
             VALUES (:userid, :score)
-    """
+    "
 
-    getLongestStandingWRRuns: """
+    getLongestStandingWRRuns: "
         SELECT *, FLOOR(JULIANDAY('now') - JULIANDAY(date)) AS age
         FROM runsView WHERE place = 1 ORDER BY date
-    """
+    "
 
     deleteAllRuns: "DELETE FROM runs"
 
-    getNumberOfRunsPerPlayer: """
+    getNumberOfRunsPerPlayer: "
         SELECT name, count(name) AS count
         FROM runsView
         GROUP BY name
         ORDER BY count DESC
-    """
+    "
 
     getNewestRuns: "SELECT * from runsView ORDER BY date DESC LIMIT ?"
     
@@ -101,21 +101,21 @@ queries = {
 
     updateScore: "REPLACE INTO scores (userid, score) VALUES (?, ?)"
 
-    getAllScores: """
+    getAllScores: "
         SELECT
             users.name,
             scores.score,
             RANK() OVER (ORDER BY scores.score DESC) AS pos
         FROM scores
         INNER JOIN users USING(userid)
-    """
+    "
 
-    isUsernameCached: """
+    isUsernameCached: "
         SELECT EXISTS(
             SELECT date FROM users WHERE userid = ?
                 AND JULIANDAY('now') - JULIANDAY(date) < 7
         ) as isCached
-    """
+    "
 
     getPointRankings: "SELECT * FROM files WHERE filename = 'pointrankings'"
 }
