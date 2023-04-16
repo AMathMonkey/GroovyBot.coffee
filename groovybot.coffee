@@ -12,7 +12,7 @@ srcomHelper = require './modules/srcomHelper'
 
 client = new Client({ intents: [Intents.FLAGS.GUILDS] })
 
-getDate = -> new Date().toUTCString()
+getDate = -> new Date().toISOString()
 
 pointRankingsTask = (channelId) ->
     channel = client.channels.resolve channelId
