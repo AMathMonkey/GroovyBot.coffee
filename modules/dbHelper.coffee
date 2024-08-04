@@ -4,7 +4,7 @@ sqlite = require 'sqlite'
 srcomHelper = require './srcomHelper'
 utilities = require './utilities'
 
-queries = {
+queries =
     createRuns: "
         CREATE TABLE IF NOT EXISTS runs (
             userid TEXT NOT NULL,
@@ -118,16 +118,15 @@ queries = {
     "
 
     getPointRankings: "SELECT * FROM files WHERE filename = 'pointrankings'"
-}
 
 getdb = do ->
     db = null
     return ->
         unless db?
-            db = await sqlite.open({
+            db = await sqlite.open(
                 filename: './groovy.db'
                 driver: sqlite3.Database
-            })
+            )
             for query in ["createRuns", "createUsers", "createScores", "createFiles", "createRunsView"]
                 await db.run(queries[query])
         db
@@ -170,15 +169,13 @@ exports.getRunsWithUsernames = (runs) ->
 
 exports.updateUserCache = (runs) ->
     db = await getdb()
-    userids = [new Set(run.userid for run in runs)...]
-    Promise.all(for userid in userids
+    userids = new Set(run.userid for run in runs)
+    Promise.all(for userid from userids
         do (userid) -> # this is needed or you get weird var-related misbehaviour
-            db.get(queries.isUsernameCached, userid).then((result) ->
-                unless result.isCached
-                    srcomHelper.getUsername(userid).then((name) ->
-                        db.run(queries.updateUser, userid, name)
-                    )
-            )
+            result = await db.get(queries.isUsernameCached, userid)
+            unless result.isCached
+                name = await srcomHelper.getUsername(userid)
+                db.run(queries.updateUser, userid, name)
     )
 
 exports.getLongestStandingWRRuns = ->
@@ -211,7 +208,8 @@ exports.getScores = ->
 
 exports.getPointRankings = ->
     db = await getdb()
-    db.get(queries.getPointRankings).then((obj) -> obj?.data)
+    result = await db.get(queries.getPointRankings)
+    result?.data
 
 exports.saveTable = (tableString) ->
     db = await getdb()
