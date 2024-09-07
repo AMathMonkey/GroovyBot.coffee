@@ -119,24 +119,18 @@ queries =
 
     getPointRankings: "SELECT * FROM files WHERE filename = 'pointrankings'"
 
-getdb = do ->
-    db = null
-    return ->
-        unless db?
-            db = await open(
-                filename: './groovy.db'
-                driver: sqlite3.Database
-            )
-            for query in ["createRuns", "createUsers", "createScores", "createFiles", "createRunsView"]
-                await db.run(queries[query])
-        db
+db = await open(
+    filename: './groovy.db'
+    driver: sqlite3.Database
+)
+for query in ["createRuns", "createUsers", "createScores", "createFiles", "createRunsView"]
+    await db.run(queries[query])
 
 objToNamedQueryParameters = (obj, fieldsToUse) ->
     s = new Set fieldsToUse
     Object.fromEntries([":#{k}", v] for k, v of obj when s.has(k))
 
 export insertRuns = (runs) ->
-    db = await getdb()
     Promise.all(
         db.run(
             queries.insertRun
@@ -145,30 +139,23 @@ export insertRuns = (runs) ->
     )
 
 export runInDB = (run) ->
-    db = await getdb()
     result = await db.get(
         queries.getOneRunForNewRuns
         objToNamedQueryParameters(run, ["userid", "category", "track", "time", "date"])
     )
     result?
     
-export getNumberOfRunsPerPlayer = ->
-    db = await getdb()
-    db.all(queries.getNumberOfRunsPerPlayer)
+export getNumberOfRunsPerPlayer = -> db.all(queries.getNumberOfRunsPerPlayer)
 
-export getNewestRuns = (numruns) ->
-    db = await getdb()
-    db.all(queries.getNewestRuns, numruns)
+export getNewestRuns = (numruns) -> db.all(queries.getNewestRuns, numruns)
 
 export getRunsWithUsernames = (runs) ->
-    db = await getdb()
     {
         run...
         (await db.get(queries.getNameByUserId, run.userid))...
     } for run in runs
 
 export updateUserCache = (runs) ->
-    db = await getdb()
     userids = new Set(run.userid for run in runs)
     Promise.all(for userid from userids
         do (userid) -> # this is needed or you get weird var-related misbehaviour
@@ -178,19 +165,12 @@ export updateUserCache = (runs) ->
                 db.run(queries.updateUser, userid, name)
     )
 
-export getLongestStandingWRRuns = ->
-    db = await getdb()
-    db.all(queries.getLongestStandingWRRuns)
+export getLongestStandingWRRuns = -> db.all(queries.getLongestStandingWRRuns)
 
-export getAllRuns = ->
-    db = await getdb()
-    db.all(queries.getAllRuns)
+export getAllRuns = -> db.all(queries.getAllRuns)
 
 export updateScores = ->
-    db = await getdb()
-    runs = await getAllRuns()
-
-    result = runs.reduce(
+    result = (await getAllRuns()).reduce(
         (acc, run) -> {
             acc...,
             [run.userid]: (acc[run.userid] ? 0) + utilities.calcScore(run.place)
@@ -202,21 +182,13 @@ export updateScores = ->
         db.run(queries.updateScore, userid, score)
     )
 
-export getScores = ->
-    db = await getdb()
-    db.all(queries.getAllScores)
+export getScores = -> db.all(queries.getAllScores)
 
-export getPointRankings = ->
-    db = await getdb()
-    result = await db.get(queries.getPointRankings)
-    result?.data
+export getPointRankings = -> (await db.get queries.getPointRankings)?.data
 
-export saveTable = (tableString) ->
-    db = await getdb()
-    db.run(queries.replacePointRankings, tableString)
+export saveTable = (tableString) -> db.run(queries.replacePointRankings, tableString)
 
-export getOneRunForILRanking = (query) ->
-    db = await getdb()
+export getOneRunForILRanking = (query) -> 
     db.get(queries.getOneRunForILRanking, objToNamedQueryParameters(query, ["track", "category", "name"]))
 
 export getNewRunsString = (runs) ->

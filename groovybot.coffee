@@ -70,7 +70,7 @@ client.once 'ready', ->
                 content: 'I only reply to commands issued in the GroovyBot channel.'
                 ephemeral: true
             )
-        console.log "#{getDate()}: Recieved command #{i.commandName} from user #{i.user.username}, options #{JSON.stringify(i.options)}"
+        console.log "#{getDate()}: Recieved command #{i.commandName} from user #{i.user.username}, options: #{JSON.stringify(i.options.data)}"
 
         [message, ephemeral] = await switch i.commandName
             when 'newestruns' then commandHelper.newestruns(i.options.getInteger('numruns'))
