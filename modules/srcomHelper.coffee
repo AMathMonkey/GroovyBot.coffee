@@ -1,5 +1,5 @@
-fetch = require 'node-fetch'
-utilities = require './utilities'
+import fetch from 'node-fetch'
+import * as utilities from './utilities.js'
 
 ids =
     game: 'w6j992dj'
@@ -17,7 +17,7 @@ ids =
 getOneLeaderboard = (track, category) ->
     response = await fetch "https://www.speedrun.com/api/v1/leaderboards/#{ids.game}/level/#{ids.tracks[track]}/#{ids.categories[category]}"
     json = await response.json()
-    runs = entry.run for entry in json.data.runs
+    runs = (entry.run for entry in json.data.runs)
     for run in runs
         track: track
         category: category
@@ -25,14 +25,14 @@ getOneLeaderboard = (track, category) ->
         date: run.date
         time: utilities.formatTime(run.times.primary)
 
-exports.getRuns = ->
+export getRuns = ->
     boardsGen = ->
         for category of ids.categories
             for track of ids.tracks
                 yield getOneLeaderboard(track, category)
-    (await Promise.all [boardsGen()...]).flat()
+    (await Promise.all boardsGen()).flat()
 
-exports.getUsername = (userid) ->
+export getUsername = (userid) ->
     response = await fetch "https://www.speedrun.com/api/v1/users/#{userid}"
     json = await response.json()
     json.data.names.international

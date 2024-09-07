@@ -1,14 +1,14 @@
-dbHelper = require './dbHelper'
-utilities = require './utilities'
+import * as dbHelper from './dbHelper.js'
+import * as utilities from './utilities.js'
 
-exports.runsperplayer = ->
+export runsperplayer = ->
     result = await dbHelper.getNumberOfRunsPerPlayer()
     [
         "Number of different IL runs submitted by each player (12 maximum):\n"
         "#{row.name}: #{row.count}" for row in result...
     ].join("\n")
 
-exports.newestruns = (numruns) ->
+export newestruns = (numruns) ->
     unless numruns? and (1 <= numruns <= 10)
         invalidArg = true
         numruns = 5
@@ -25,7 +25,7 @@ exports.newestruns = (numruns) ->
         by #{run.name}, #{utilities.makeOrdinal run.place} place" for run in result...
     ].join('\n')
 
-exports.longeststanding = ->
+export longeststanding = ->
     wrRuns = await dbHelper.getLongestStandingWRRuns()
     [
         "WR runs sorted by longest standing:\n"
@@ -33,9 +33,9 @@ exports.longeststanding = ->
         #{run.age} day#{if run.age is 1 then '' else 's'} old" for run in wrRuns...
     ].join('\n')
     
-exports.pointrankings = dbHelper.getPointRankings
+export pointrankings = dbHelper.getPointRankings
 
-exports.ilranking = (name, abbr) ->
+export ilranking = (name, abbr) ->
     name = (name ? '').trim().toLowerCase()
     abbr = (abbr ? '').trim().toLowerCase()
 

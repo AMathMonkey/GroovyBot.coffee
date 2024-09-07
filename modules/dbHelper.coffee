@@ -1,8 +1,8 @@
-sqlite3 = require 'sqlite3'
-sqlite = require 'sqlite'
+import sqlite3 from 'sqlite3'
+import { open } from 'sqlite'
 
-srcomHelper = require './srcomHelper'
-utilities = require './utilities'
+import * as srcomHelper from './srcomHelper.js'
+import * as utilities from './utilities.js'
 
 queries =
     createRuns: "
@@ -123,7 +123,7 @@ getdb = do ->
     db = null
     return ->
         unless db?
-            db = await sqlite.open(
+            db = await open(
                 filename: './groovy.db'
                 driver: sqlite3.Database
             )
@@ -135,7 +135,7 @@ objToNamedQueryParameters = (obj, fieldsToUse) ->
     s = new Set fieldsToUse
     Object.fromEntries([":#{k}", v] for k, v of obj when s.has(k))
 
-exports.insertRuns = (runs) ->
+export insertRuns = (runs) ->
     db = await getdb()
     Promise.all(
         db.run(
@@ -144,7 +144,7 @@ exports.insertRuns = (runs) ->
         ) for run in runs
     )
 
-exports.runInDB = (run) ->
+export runInDB = (run) ->
     db = await getdb()
     result = await db.get(
         queries.getOneRunForNewRuns
@@ -152,22 +152,22 @@ exports.runInDB = (run) ->
     )
     result?
     
-exports.getNumberOfRunsPerPlayer = ->
+export getNumberOfRunsPerPlayer = ->
     db = await getdb()
     db.all(queries.getNumberOfRunsPerPlayer)
 
-exports.getNewestRuns = (numruns) ->
+export getNewestRuns = (numruns) ->
     db = await getdb()
     db.all(queries.getNewestRuns, numruns)
 
-exports.getRunsWithUsernames = (runs) ->
+export getRunsWithUsernames = (runs) ->
     db = await getdb()
     {
         run...
         (await db.get(queries.getNameByUserId, run.userid))...
     } for run in runs
 
-exports.updateUserCache = (runs) ->
+export updateUserCache = (runs) ->
     db = await getdb()
     userids = new Set(run.userid for run in runs)
     Promise.all(for userid from userids
@@ -178,17 +178,17 @@ exports.updateUserCache = (runs) ->
                 db.run(queries.updateUser, userid, name)
     )
 
-exports.getLongestStandingWRRuns = ->
+export getLongestStandingWRRuns = ->
     db = await getdb()
     db.all(queries.getLongestStandingWRRuns)
 
-exports.getAllRuns = ->
+export getAllRuns = ->
     db = await getdb()
     db.all(queries.getAllRuns)
 
-exports.updateScores = ->
+export updateScores = ->
     db = await getdb()
-    runs = await @getAllRuns()
+    runs = await getAllRuns()
 
     result = runs.reduce(
         (acc, run) -> {
@@ -202,25 +202,25 @@ exports.updateScores = ->
         db.run(queries.updateScore, userid, score)
     )
 
-exports.getScores = ->
+export getScores = ->
     db = await getdb()
     db.all(queries.getAllScores)
 
-exports.getPointRankings = ->
+export getPointRankings = ->
     db = await getdb()
     result = await db.get(queries.getPointRankings)
     result?.data
 
-exports.saveTable = (tableString) ->
+export saveTable = (tableString) ->
     db = await getdb()
     db.run(queries.replacePointRankings, tableString)
 
-exports.getOneRunForILRanking = (query) ->
+export getOneRunForILRanking = (query) ->
     db = await getdb()
     db.get(queries.getOneRunForILRanking, objToNamedQueryParameters(query, ["track", "category", "name"]))
 
-exports.getNewRunsString = (runs) ->
+export getNewRunsString = (runs) ->
     (for run in runs
-        if await @runInDB run then continue
+        if await runInDB run then continue
         else "New run! #{run.track} - #{run.category} in #{run.time} by #{run.name}")
     .join('\n')

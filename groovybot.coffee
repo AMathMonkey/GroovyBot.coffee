@@ -1,16 +1,15 @@
-require('dotenv').config()
-require 'coffeescript/register'
+import 'dotenv/config'
 
-{ Client, Intents } = require 'discord.js'
+import { Client, GatewayIntentBits  } from 'discord.js'
 
 POINT_RANKINGS_DELAY = 60 * 60 * 1000 # 1 hour
 
-dbHelper = require './modules/dbHelper'
-commandHelper = require './modules/commandHelper'
-utilities = require './modules/utilities'
-srcomHelper = require './modules/srcomHelper'
+import * as dbHelper from './modules/dbHelper.js'
+import * as commandHelper from './modules/commandHelper.js'
+import * as utilities from './modules/utilities.js'
+import * as srcomHelper from './modules/srcomHelper.js'
 
-client = new Client({ intents: [Intents.FLAGS.GUILDS] })
+client = new Client({ intents: [GatewayIntentBits.Guilds] })
 
 getDate = -> new Date().toISOString()
 
