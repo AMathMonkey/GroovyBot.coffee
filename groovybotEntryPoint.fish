@@ -1,3 +1,4 @@
+#!/bin/fish
 cd (dirname (status --current-filename))
 test -d build; and rm -rf build
 coffee --compile --output build .

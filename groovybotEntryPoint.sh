@@ -1,3 +1,4 @@
+#!/bin/bash
 cd "$(dirname -- "$BASH_SOURCE")"
 [[ -d build ]] && rm -rf build
 coffee --compile --output build .
