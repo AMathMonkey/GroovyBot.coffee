@@ -47,9 +47,7 @@ pointRankingsTask = (channelId) ->
 
     # schedules itself to run again after delay
     setTimeout pointRankingsTask, POINT_RANKINGS_DELAY, channelId
-    return
 
-allowedChannelIds = null
 client.once 'ready', ->
     modeIsProd = process.env.MODE is 'PROD'
     console.log "#{getDate()}: Logged in as #{client.user.tag}!"
@@ -66,10 +64,15 @@ client.once 'ready', ->
     await pointRankingsTask allowedChannelIds[0]
     # Only add this event handler after pointRankingsTask runs for the first time
     client.on 'interactionCreate', (i) ->
-        return unless i.isCommand() and i.channelId in allowedChannelIds
-        console.log "#{getDate()}: Recieved command #{i.commandName} from user #{i.user.username}"
+        return unless i.isCommand() 
+        unless i.channelId in allowedChannelIds
+            return await i.reply(
+                content: 'I only reply to commands issued in the GroovyBot channel.'
+                ephemeral: true
+            )
+        console.log "#{getDate()}: Recieved command #{i.commandName} from user #{i.user.username}, options #{JSON.stringify(i.options)}"
 
-        message = await switch i.commandName
+        [message, ephemeral] = await switch i.commandName
             when 'newestruns' then commandHelper.newestruns(i.options.getInteger('numruns'))
             when 'runsperplayer' then commandHelper.runsperplayer()
             when 'longeststanding' then commandHelper.longeststanding()
@@ -78,9 +81,10 @@ client.once 'ready', ->
                 i.options.getString('name')
                 i.options.getString('abbr')
             )
-        
-        await i.reply utilities.encloseInCodeBlock message
-        console.log "#{getDate()}: Sent reply successfully!"
-        return
+        await i.reply(
+            content: utilities.encloseInCodeBlock message
+            ephemeral: ephemeral
+        )
+        console.log "#{getDate()}: Sent reply successfully! Ephemeral: #{ephemeral}"
 
 client.login process.env.DISCORD_TOKEN
