@@ -14,12 +14,13 @@ export encloseInCodeBlock = (message) -> "```\n#{message}\n```"
 
 export formatTime = (timeString) ->
     timeObj = tinyduration.parse timeString
-    "#{timeObj.minutes}:#{(timeObj.seconds ? 0).toFixed(2).padStart(5, "0")}"
+    "#{timeObj.minutes}:#{(timeObj.seconds ? 0).toFixed(2).padStart(5, '0')}"
 
 export makeOrdinal = (n) ->
-    suffix = if 11 <= (n % 100) <= 13 then "th"
-    else ["th", "st", "nd", "rd", "th"][Math.min(n % 10, 4)]
-    String(n).concat(suffix)
+    String(n).concat(
+        if 11 <= (n % 100) <= 13 then 'th'
+        else ['th', 'st', 'nd', 'rd', 'th'][Math.min(n % 10, 4)]
+    )
 
 export calcScore = (placing) ->
     switch placing
@@ -29,14 +30,12 @@ export calcScore = (placing) ->
 
 export makeTable = (scores) ->
     new AsciiTable3()
-        .setHeading("Pos", "Score", "Name")
+        .setHeading('Pos', 'Score', 'Name')
         .setAligns([AlignmentEnum.RIGHT, AlignmentEnum.RIGHT, AlignmentEnum.LEFT])
         .addRowMatrix([s.pos, s.score, s.name] for s in scores)
         .toString()
 
 export trackCategoryConverter = (abbr) ->
-    category = if abbr.endsWith('100') then "100 Points" else "Time Attack"
-
+    category = if abbr.endsWith('100') then '100 Points' else 'Time Attack'
     mapping = TRACK_ABBR_MAPPINGS.find (m) -> abbr.startsWith m[0]
-
     { category, track: mapping[1] } if mapping?
