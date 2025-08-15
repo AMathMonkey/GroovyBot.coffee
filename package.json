@@ -8,6 +8,7 @@
     "discord.js": "^14.16.1",
     "dotenv": "^16.4.5",
     "node-fetch": "^3.3.2",
+    "readwrite-lock": "^1.0.5“,
     "sqlite": "^5.1.1",
     "sqlite3": "^5.0.2",
     "tinyduration": "^3.2.2"
