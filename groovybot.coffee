@@ -1,14 +1,14 @@
 import 'dotenv/config'
 
-import * as ReadwriteLock from 'readwrite-lock'
+import ReadwriteLock from 'readwrite-lock'
 import { Client, GatewayIntentBits  } from 'discord.js'
-
-POINT_RANKINGS_DELAY = 60 * 60 * 1000 # 1 hour
 
 import * as dbHelper from './modules/dbHelper.js'
 import * as commandHelper from './modules/commandHelper.js'
 import * as utilities from './modules/utilities.js'
 import * as srcomHelper from './modules/srcomHelper.js'
+
+POINT_RANKINGS_DELAY = 60 * 60 * 1000 # 1 hour
 
 lock = new ReadwriteLock()
 
