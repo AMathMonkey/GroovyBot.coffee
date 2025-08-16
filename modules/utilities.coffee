@@ -10,6 +10,8 @@ TRACK_ABBR_MAPPINGS = [
     ['ww', "Wicked Woods"]
 ]
 
+export getDate = -> do (new Date).toISOString
+
 export encloseInCodeBlock = (message) -> "```\n#{message}\n```"
 
 export formatTime = (timeString) ->

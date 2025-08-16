@@ -14,11 +14,9 @@ lock = new ReadwriteLock()
 
 client = new Client({ intents: [GatewayIntentBits.Guilds] })
 
-getDate = -> new Date().toISOString()
-
 pointRankingsTask = (channelId) ->
     channel = client.channels.resolve channelId
-    console.log "#{getDate()}: Checking leaderboards"
+    console.log "#{do utilities.getDate}: Checking leaderboards"
     
     runs = await srcomHelper.getRuns()
     await lock.acquireWrite('db', ->
@@ -53,7 +51,7 @@ pointRankingsTask = (channelId) ->
 
 client.once 'ready', ->
     modeIsProd = process.env.MODE is 'PROD'
-    console.log "#{getDate()}: Logged in as #{client.user.tag}!"
+    console.log "#{do utilities.getDate}: Logged in as #{client.user.tag}!"
     groovybotChannel = client.channels.cache.find (x) -> x.name is "groovybot"
     groovytestChannel = client.channels.cache.find (x) -> x.name is "groovytest"
     
@@ -73,7 +71,7 @@ client.once 'ready', ->
                 content: 'I only reply to commands issued in the GroovyBot channel.'
                 ephemeral: true
             )
-        console.log "#{getDate()}: Recieved command #{i.commandName} from user #{i.user.username}, options: #{JSON.stringify(i.options.data)}"
+        console.log "#{do utilities.getDate}: Recieved command #{i.commandName} from user #{i.user.username}, options: #{JSON.stringify(i.options.data)}"
         await lock.acquireRead('db', ->
             [message, ephemeral] = await switch i.commandName
                 when 'newestruns' then commandHelper.newestruns(i.options.getInteger('numruns'))
@@ -88,6 +86,6 @@ client.once 'ready', ->
                 content: utilities.encloseInCodeBlock message
                 ephemeral: ephemeral
             )
-            console.log "#{getDate()}: Sent reply successfully! Ephemeral: #{ephemeral}"
+            console.log "#{do utilities.getDate}: Sent reply successfully! Ephemeral: #{ephemeral}"
         )
 client.login process.env.DISCORD_TOKEN
