@@ -39,8 +39,8 @@ export longeststanding = ->
 export pointrankings = -> [await do dbHelper.getPointRankings, false]
 
 export ilranking = (name, abbr) ->
-    name = (name ? '').trim().toLowerCase()
-    abbr = (abbr ? '').trim().toLowerCase()
+    name = do (do (name ? '').trim).toLowerCase
+    abbr = do (do (abbr ? '').trim).toLowerCase
 
     trackAndCategory = utilities.trackCategoryConverter abbr
     return ['Invalid category - please use track initials like cc or MMm100', true] unless trackAndCategory?

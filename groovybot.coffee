@@ -25,7 +25,7 @@ pointRankingsTask = (channelId) ->
         newRunsString = await dbHelper.getNewRunsString runsWithNames
 
         if newRunsString
-            console.log "New runs found"
+            console.log 'New runs found'
             message = [utilities.encloseInCodeBlock newRunsString]
             await dbHelper.insertRuns runs
             await do dbHelper.updateScores
@@ -37,7 +37,7 @@ pointRankingsTask = (channelId) ->
                 console.log 'But rankings unchanged'
                 message.push utilities.encloseInCodeBlock 'But rankings are unchanged'
             else
-                console.log "Point rankings update"
+                console.log 'Point rankings update'
                 message.push utilities.encloseInCodeBlock "Point rankings update!\n#{table}"
                 await dbHelper.saveTable table
             message = message.join ''

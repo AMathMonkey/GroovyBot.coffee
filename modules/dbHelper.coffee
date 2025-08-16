@@ -154,13 +154,12 @@ export getRunsWithUsernames = (runs) ->
 
 export updateUserCache = (runs) ->
     userids = new Set(run.userid for run in runs)
-    promises = for userid from userids
+    Promise.all(for userid from userids
         do (userid) -> # this is needed or you get weird var-related misbehaviour
             result = await db.get queries.isUsernameCached, userid
             unless result.isCached
                 name = await srcomHelper.getUsername userid
-                db.run queries.updateUser, userid, name
-    Promise.all promises
+                db.run queries.updateUser, userid, name)
 
 export getLongestStandingWRRuns = -> db.all queries.getLongestStandingWRRuns
 
@@ -173,11 +172,9 @@ export updateScores = ->
             [run.userid]: (acc[run.userid] ? 0) + utilities.calcScore run.place
         }),
         {},
-
-    promises = for userid, score of result
-        db.run queries.updateScore, userid, score
     
-    Promise.all promises
+    Promise.all(for userid, score of result
+        db.run queries.updateScore, userid, score)
 
 export getScores = -> db.all queries.getAllScores
 

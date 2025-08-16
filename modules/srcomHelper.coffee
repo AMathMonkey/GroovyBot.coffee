@@ -16,23 +16,23 @@ ids =
 
 getOneLeaderboard = (track, category) ->
     response = await fetch "https://www.speedrun.com/api/v1/leaderboards/#{ids.game}/level/#{ids.tracks[track]}/#{ids.categories[category]}"
-    json = await response.json()
+    json = await do response.json
     runs = (entry.run for entry in json.data.runs)
     for run in runs
         track: track
         category: category
         userid: run.players[0].id
         date: run.date
-        time: utilities.formatTime(run.times.primary)
+        time: utilities.formatTime run.times.primary
 
 export getRuns = ->
     boardsGen = ->
         for category of ids.categories
             for track of ids.tracks
-                yield getOneLeaderboard(track, category)
-    (await Promise.all boardsGen()).flat()
+                yield getOneLeaderboard track, category
+    do (await Promise.all do boardsGen).flat
 
 export getUsername = (userid) ->
     response = await fetch "https://www.speedrun.com/api/v1/users/#{userid}"
-    json = await response.json()
+    json = await do response.json
     json.data.names.international
