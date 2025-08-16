@@ -1,7 +1,7 @@
 import 'dotenv/config'
 
 import ReadwriteLock from 'readwrite-lock'
-import { Client, GatewayIntentBits  } from 'discord.js'
+import { Client, GatewayIntentBits } from 'discord.js'
 
 import * as dbHelper from './modules/dbHelper.js'
 import * as commandHelper from './modules/commandHelper.js'
@@ -21,7 +21,7 @@ pointRankingsTask = (channelId) ->
     console.log "#{getDate()}: Checking leaderboards"
     
     runs = await srcomHelper.getRuns()
-    await lock.acquireWrite('db', () ->
+    await lock.acquireWrite('db', ->
         await dbHelper.updateUserCache runs
         runsWithNames = await dbHelper.getRunsWithUsernames runs
         newRunsString = await dbHelper.getNewRunsString runsWithNames
@@ -74,7 +74,7 @@ client.once 'ready', ->
                 ephemeral: true
             )
         console.log "#{getDate()}: Recieved command #{i.commandName} from user #{i.user.username}, options: #{JSON.stringify(i.options.data)}"
-        await lock.acquireRead('db', () ->
+        await lock.acquireRead('db', ->
             [message, ephemeral] = await switch i.commandName
                 when 'newestruns' then commandHelper.newestruns(i.options.getInteger('numruns'))
                 when 'runsperplayer' then commandHelper.runsperplayer()
