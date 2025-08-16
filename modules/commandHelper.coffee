@@ -28,12 +28,13 @@ export newestruns = (numruns) ->
     [message, false]
 
 export longeststanding = ->
-    wrRuns = await do dbHelper.getLongestStandingWRRuns
-    message = [
-        'WR runs sorted by longest standing:\n'
-        "#{run.track} - #{run.category} in #{run.time} by #{run.name},
-        #{run.age} day#{if run.age is 1 then '' else 's'} old" for run in wrRuns...
-    ].join '\n'
+    strs = for run in await do dbHelper.getLongestStandingWRRuns
+        years = Math.floor run.age / 365
+        yearPart = if years then "#{years} year#{if years is 1 then '' else 's'} and " else ''
+        days = run.age % 365
+        dayPart = "#{days} day#{if days is 1 then '' else 's'}"
+        "#{run.track} - #{run.category} in #{run.time} by #{run.name}, #{yearPart}#{dayPart} old"
+    message = ['WR runs sorted by longest standing:\n', strs...].join '\n'
     [message, false]
     
 export pointrankings = -> [await do dbHelper.getPointRankings, false]
