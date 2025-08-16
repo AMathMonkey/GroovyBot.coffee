@@ -138,7 +138,7 @@ export insertRuns = (runs) ->
 export runInDB = (run) ->
     result = await db.get \
         queries.getOneRunForNewRuns,
-        objToNamedQueryParameters(run, ["userid", "category", "track", "time", "date"]),
+        objToNamedQueryParameters run, ["userid", "category", "track", "time", "date"],
     result?
     
 export getNumberOfRunsPerPlayer = -> db.all queries.getNumberOfRunsPerPlayer
@@ -152,7 +152,7 @@ export getRunsWithUsernames = (runs) ->
     } for run in runs
 
 export updateUserCache = (runs) ->
-    userids = new Set(run.userid for run in runs)
+    userids = new Set (run.userid for run in runs)
     Promise.all(for userid from userids
         do (userid) -> # this is needed or you get weird var-related misbehaviour
             result = await db.get queries.isUsernameCached, userid
