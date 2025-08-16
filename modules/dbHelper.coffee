@@ -119,80 +119,77 @@ queries =
 
     getPointRankings: "SELECT * FROM files WHERE filename = 'pointrankings'"
 
-db = await open(
+db = await open
     filename: './groovy.db'
     driver: sqlite3.Database
-)
-for query in ["createRuns", "createUsers", "createScores", "createFiles", "createRunsView"]
-    await db.run(queries[query])
+for query in ['createRuns', 'createUsers', 'createScores', 'createFiles', 'createRunsView']
+    await db.run queries[query]
 
 objToNamedQueryParameters = (obj, fieldsToUse) ->
     s = new Set fieldsToUse
     Object.fromEntries([":#{k}", v] for k, v of obj when s.has(k))
 
 export insertRuns = (runs) ->
-    Promise.all(
+    Promise.all \
         db.run(
             queries.insertRun
             objToNamedQueryParameters(run, ["userid", "category", "track", "time", "date"])
         ) for run in runs
-    )
 
 export runInDB = (run) ->
-    result = await db.get(
-        queries.getOneRunForNewRuns
-        objToNamedQueryParameters(run, ["userid", "category", "track", "time", "date"])
-    )
+    result = await db.get \
+        queries.getOneRunForNewRuns,
+        objToNamedQueryParameters(run, ["userid", "category", "track", "time", "date"]),
     result?
     
-export getNumberOfRunsPerPlayer = -> db.all(queries.getNumberOfRunsPerPlayer)
+export getNumberOfRunsPerPlayer = -> db.all queries.getNumberOfRunsPerPlayer
 
-export getNewestRuns = (numruns) -> db.all(queries.getNewestRuns, numruns)
+export getNewestRuns = (numruns) -> db.all queries.getNewestRuns, numruns
 
 export getRunsWithUsernames = (runs) ->
     {
         run...
-        (await db.get(queries.getNameByUserId, run.userid))...
+        (await db.get queries.getNameByUserId, run.userid)...
     } for run in runs
 
 export updateUserCache = (runs) ->
     userids = new Set(run.userid for run in runs)
-    Promise.all(for userid from userids
+    promises = for userid from userids
         do (userid) -> # this is needed or you get weird var-related misbehaviour
-            result = await db.get(queries.isUsernameCached, userid)
+            result = await db.get queries.isUsernameCached, userid
             unless result.isCached
-                name = await srcomHelper.getUsername(userid)
-                db.run(queries.updateUser, userid, name)
-    )
+                name = await srcomHelper.getUsername userid
+                db.run queries.updateUser, userid, name
+    Promise.all promises
 
-export getLongestStandingWRRuns = -> db.all(queries.getLongestStandingWRRuns)
+export getLongestStandingWRRuns = -> db.all queries.getLongestStandingWRRuns
 
-export getAllRuns = -> db.all(queries.getAllRuns)
+export getAllRuns = -> db.all queries.getAllRuns
 
 export updateScores = ->
-    result = (await getAllRuns()).reduce(
-        (acc, run) -> {
+    result = (await do getAllRuns).reduce \
+        ((acc, run) -> {
             acc...,
-            [run.userid]: (acc[run.userid] ? 0) + utilities.calcScore(run.place)
-        }
-        {}
-    )
+            [run.userid]: (acc[run.userid] ? 0) + utilities.calcScore run.place
+        }),
+        {},
 
-    Promise.all(for userid, score of result
-        db.run(queries.updateScore, userid, score)
-    )
+    promises = for userid, score of result
+        db.run queries.updateScore, userid, score
+    
+    Promise.all promises
 
-export getScores = -> db.all(queries.getAllScores)
+export getScores = -> db.all queries.getAllScores
 
 export getPointRankings = -> (await db.get queries.getPointRankings)?.data
 
-export saveTable = (tableString) -> db.run(queries.replacePointRankings, tableString)
+export saveTable = (tableString) -> db.run queries.replacePointRankings, tableString
 
 export getOneRunForILRanking = (query) -> 
-    db.get(queries.getOneRunForILRanking, objToNamedQueryParameters(query, ["track", "category", "name"]))
+    db.get queries.getOneRunForILRanking, objToNamedQueryParameters query, ['track', 'category', 'name']
 
 export getNewRunsString = (runs) ->
     (for run in runs
         if await runInDB run then continue
         else "New run! #{run.track} - #{run.category} in #{run.time} by #{run.name}")
-    .join('\n')
+    .join '\n'

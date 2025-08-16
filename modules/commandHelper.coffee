@@ -2,11 +2,11 @@ import * as dbHelper from './dbHelper.js'
 import * as utilities from './utilities.js'
 
 export runsperplayer = ->
-    result = await dbHelper.getNumberOfRunsPerPlayer()
+    result = await do dbHelper.getNumberOfRunsPerPlayer
     message = [
-        "Number of different IL runs submitted by each player (12 maximum):\n"
+        'Number of different IL runs submitted by each player (12 maximum):\n'
         "#{row.name}: #{row.count}" for row in result...
-    ].join("\n")
+    ].join '\n'
     [message, false]
 
 export newestruns = (numruns) ->
@@ -14,41 +14,41 @@ export newestruns = (numruns) ->
         invalidArg = true
         numruns = 5
 
-    result = await dbHelper.getNewestRuns(numruns)
+    result = await dbHelper.getNewestRuns numruns
         
     header =
-        if numruns is 1 then "Here is the newest run on the board"
+        if numruns is 1 then 'Here is the newest run on the board'
         else "Here are the #{numruns} newest runs on the board"
 
     message = [
         "#{header}#{if invalidArg then " (can display between 1 and 10)" else ''}:\n",
         "#{run.track} - #{run.category} in #{run.time}
         by #{run.name}, #{utilities.makeOrdinal run.place} place" for run in result...
-    ].join('\n')
+    ].join '\n'
     [message, false]
 
 export longeststanding = ->
-    wrRuns = await dbHelper.getLongestStandingWRRuns()
+    wrRuns = await do dbHelper.getLongestStandingWRRuns
     message = [
-        "WR runs sorted by longest standing:\n"
+        'WR runs sorted by longest standing:\n'
         "#{run.track} - #{run.category} in #{run.time} by #{run.name},
         #{run.age} day#{if run.age is 1 then '' else 's'} old" for run in wrRuns...
-    ].join('\n')
+    ].join '\n'
     [message, false]
     
-export pointrankings = -> [await dbHelper.getPointRankings(), false]
+export pointrankings = -> [await do dbHelper.getPointRankings, false]
 
 export ilranking = (name, abbr) ->
     name = (name ? '').trim().toLowerCase()
     abbr = (abbr ? '').trim().toLowerCase()
 
     trackAndCategory = utilities.trackCategoryConverter abbr
-    return ["Invalid category - please use track initials like cc or MMm100", true] unless trackAndCategory?
+    return ['Invalid category - please use track initials like cc or MMm100', true] unless trackAndCategory?
 
-    run = await dbHelper.getOneRunForILRanking({ name, trackAndCategory... })
+    run = await dbHelper.getOneRunForILRanking { name, trackAndCategory... }
 
     if run then [
         "#{run.track} - #{run.category} in #{run.time}
         by #{run.name}, #{utilities.makeOrdinal run.place} place"
         false
-    ] else ["No run matching that username", true]
+    ] else ['No run matching that username', true]
