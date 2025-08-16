@@ -127,14 +127,13 @@ for query in ['createRuns', 'createUsers', 'createScores', 'createFiles', 'creat
 
 objToNamedQueryParameters = (obj, fieldsToUse) ->
     s = new Set fieldsToUse
-    Object.fromEntries([":#{k}", v] for k, v of obj when s.has(k))
+    Object.fromEntries ([":#{k}", v] for k, v of obj when s.has k)
 
 export insertRuns = (runs) ->
-    Promise.all \
-        db.run(
-            queries.insertRun
-            objToNamedQueryParameters(run, ["userid", "category", "track", "time", "date"])
-        ) for run in runs
+    Promise.all(for run in runs
+        db.run \
+            queries.insertRun,
+            objToNamedQueryParameters run, ["userid", "category", "track", "time", "date"])
 
 export runInDB = (run) ->
     result = await db.get \
