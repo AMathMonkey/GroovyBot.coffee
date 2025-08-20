@@ -1,7 +1,7 @@
 import 'dotenv/config'
 
 import ReadwriteLock from 'readwrite-lock'
-import { Client, GatewayIntentBits } from 'discord.js'
+import { Client, GatewayIntentBits, MessageFlags } from 'discord.js'
 
 import * as dbHelper from './modules/dbHelper.js'
 import * as commandHelper from './modules/commandHelper.js'
@@ -68,7 +68,7 @@ client.once 'ready', ->
         unless i.channelId in allowedChannelIds
             return await i.reply
                 content: 'I only reply to commands issued in the GroovyBot channel.'
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
         console.log "#{do utilities.getDate}: Recieved command #{i.commandName} from user #{i.user.username}, options: #{JSON.stringify(i.options.data)}"
         await lock.acquireRead 'db', ->
             [message, ephemeral] = await switch i.commandName
@@ -77,8 +77,9 @@ client.once 'ready', ->
                 when 'longeststanding' then do commandHelper.longeststanding
                 when 'pointrankings' then do commandHelper.pointrankings
                 when 'ilranking' then commandHelper.ilranking (i.options.getString 'name'), i.options.getString 'abbr'
-            await i.reply
+            await i.reply {
                 content: utilities.encloseInCodeBlock message
-                ephemeral: ephemeral
+                (ephemeral and {flags: MessageFlags.Ephemeral})...
+            }
             console.log "#{do utilities.getDate}: Sent reply successfully! Ephemeral: #{ephemeral}"
 client.login process.env.DISCORD_TOKEN
