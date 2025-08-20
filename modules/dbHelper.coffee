@@ -166,4 +166,4 @@ export saveTable = (tableString) -> queries.replacePointRankings.run tableString
 export getOneRunForILRanking = (query) -> queries.getOneRunForILRanking.get query
 
 export getNewRunsString = (runs) ->
-    ("New run! #{run.track} - #{run.category} in #{run.time} by #{run.name}" for run in runs when runInDB run).join '\n'
+    ("New run! #{run.track} - #{run.category} in #{run.time} by #{run.name}" for run in runs when not runInDB run).join '\n'
