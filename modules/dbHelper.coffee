@@ -1,11 +1,13 @@
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
+import Database from 'better-sqlite3'
 
 import * as srcomHelper from './srcomHelper.js'
 import * as utilities from './utilities.js'
 
+db = new Database('./groovy.db')
+db.pragma('journal_mode = WAL');
+
 queries =
-    createRuns: "
+    createRuns: db.prepare "
         CREATE TABLE IF NOT EXISTS runs (
             userid TEXT NOT NULL,
             category TEXT NOT NULL,
@@ -16,92 +18,92 @@ queries =
         )
     "
 
-    createUsers: "
+    createUsers: db.prepare "
         CREATE TABLE IF NOT EXISTS users (
             userid TEXT NOT NULL,
             name TEXT NOT NULL,
             date TEXT NOT NULL,
             PRIMARY KEY (userid)
         )
-    "
+    ")
 
-    createScores: "
+    createScores: db.prepare "
         CREATE TABLE IF NOT EXISTS scores (
             userid TEXT PRIMARY KEY NOT NULL,
             score INTEGER NOT NULL
         )
-    "
+    ")
 
-    createFiles: "
+    createFiles: db.prepare "
         CREATE TABLE IF NOT EXISTS files (
             filename TEXT PRIMARY KEY NOT NULL,
             data BLOB NOT NULL
         )
     "
 
-    createRunsView: "
+    createRunsView: db.prepare "
         CREATE VIEW IF NOT EXISTS runsView
         AS
         SELECT runs.*, users.name, RANK() OVER(PARTITION BY category, track ORDER BY time) AS place FROM runs
         INNER JOIN users USING(userid)
-    "
+    ")
 
-    getOneRunForILRanking: "
+    getOneRunForILRanking: db.prepare "
         SELECT * from runsView
         WHERE
-            category = :category
-            AND track = :track
-            AND lower(name) = :name
+            category = @category
+            AND track = @track
+            AND lower(name) = @name
     "
 
-    getOneRunForNewRuns: "
+    getOneRunForNewRuns: db.prepare "
         SELECT * FROM runs
         WHERE
-            track = :track
-            AND category = :category
-            AND time = :time
-            AND userid = :userid
-            AND date = :date
+            track = @track
+            AND category = @category
+            AND time = @time
+            AND userid = @userid
+            AND date = @date
     "
 
-    getAllRuns: "SELECT * from runsView"
+    getAllRuns: db.prepare "SELECT * from runsView"
 
-    insertRun: "
+    insertRun: db.prepare "
         REPLACE INTO runs (userid, category, track, time, date)
-            VALUES (:userid, :category, :track, :time, :date)
+            VALUES (@userid, @category, @track, @time, @date)
     "
 
-    insertScore: "
+    insertScore: db.prepare "
         INSERT INTO scores (userid, score)
-            VALUES (:userid, :score)
+            VALUES (@userid, @score)
     "
 
-    getLongestStandingWRRuns: "
+    getLongestStandingWRRuns: db.prepare "
         SELECT *, FLOOR(JULIANDAY('now') - JULIANDAY(date)) AS age
         FROM runsView WHERE place = 1 ORDER BY date
     "
 
-    deleteAllRuns: "DELETE FROM runs"
+    deleteAllRuns: db.prepare "DELETE FROM runs"
 
-    getNumberOfRunsPerPlayer: "
+    getNumberOfRunsPerPlayer: db.prepare "
         SELECT name, count(name) AS count
         FROM runsView
         GROUP BY name
         ORDER BY count DESC
     "
 
-    getNewestRuns: "SELECT * from runsView ORDER BY date DESC LIMIT ?"
+    getNewestRuns: db.prepare "SELECT * from runsView ORDER BY date DESC LIMIT ?"
     
     replacePointRankings: 
-        "REPLACE INTO files (filename, data) VALUES ('pointrankings', ?)"
+        db.prepare "REPLACE INTO files (filename, data) VALUES ('pointrankings', ?)"
 
-    getNameByUserId: 'SELECT name FROM users WHERE userid = ?'
+    getNameByUserId: db.prepare 'SELECT name FROM users WHERE userid = ?'
 
-    updateUser: "REPLACE INTO users (userid, name, date) VALUES (?, ?, DATETIME('now'))"
+    updateUser: db.prepare "REPLACE INTO users (userid, name, date) VALUES (?, ?, DATETIME('now'))"
 
-    updateScore: "REPLACE INTO scores (userid, score) VALUES (?, ?)"
+    updateScore: db.prepare "REPLACE INTO scores (userid, score) VALUES (?, ?)"
 
-    getAllScores: "
+    getAllScores: db.prepare "
         SELECT
             users.name,
             scores.score,
@@ -110,82 +112,58 @@ queries =
         INNER JOIN users USING(userid)
     "
 
-    isUsernameCached: "
+    isUsernameCached: db.prepare "
         SELECT EXISTS(
             SELECT date FROM users WHERE userid = ?
                 AND JULIANDAY('now') - JULIANDAY(date) < 7
         ) as isCached
     "
 
-    getPointRankings: "SELECT * FROM files WHERE filename = 'pointrankings'"
+    getPointRankings: db.prepare "SELECT * FROM files WHERE filename = 'pointrankings'"
 
-db = await open
-    filename: './groovy.db'
-    driver: sqlite3.Database
-for query in ['createRuns', 'createUsers', 'createScores', 'createFiles', 'createRunsView']
-    await db.run queries[query]
 
-objToNamedQueryParameters = (obj, fieldsToUse) ->
-    s = new Set fieldsToUse
-    Object.fromEntries ([":#{k}", v] for k, v of obj when s.has k)
+do queries[query].run for query in ['createRuns', 'createUsers', 'createScores', 'createFiles', 'createRunsView']
 
-export insertRuns = (runs) ->
-    Promise.all(for run in runs
-        db.run \
-            queries.insertRun,
-            objToNamedQueryParameters run, ["userid", "category", "track", "time", "date"])
+export insertRuns = (runs) -> queries.insertRun.run run for run in runs
 
-export runInDB = (run) ->
-    result = await db.get \
-        queries.getOneRunForNewRuns,
-        objToNamedQueryParameters run, ["userid", "category", "track", "time", "date"],
-    result?
+export runInDB = (run) -> (queries.getOneRunForNewRuns.get run)?
     
-export getNumberOfRunsPerPlayer = -> db.all queries.getNumberOfRunsPerPlayer
+export getNumberOfRunsPerPlayer = -> do queries.getNumberOfRunsPerPlayer.all
 
-export getNewestRuns = (numruns) -> db.all queries.getNewestRuns, numruns
+export getNewestRuns = (numruns) -> queries.getNewestRuns.all numruns
 
 export getRunsWithUsernames = (runs) ->
     {
         run...
-        (await db.get queries.getNameByUserId, run.userid)...
+        (queries.getNameByUserId.get run.userid)...
     } for run in runs
 
 export updateUserCache = (runs) ->
     userids = new Set (run.userid for run in runs)
-    Promise.all(for userid from userids
-        do (userid) -> # this is needed or you get weird var-related misbehaviour
-            result = await db.get queries.isUsernameCached, userid
-            unless result.isCached
-                name = await srcomHelper.getUsername userid
-                db.run queries.updateUser, userid, name)
+    for userid from userids
+        unless (queries.isUsernameCached.get userid).isCached
+            name = await srcomHelper.getUsername userid
+            queries.updateUser.run userid, name
 
-export getLongestStandingWRRuns = -> db.all queries.getLongestStandingWRRuns
+export getLongestStandingWRRuns = -> do queries.getLongestStandingWRRuns.all 
 
-export getAllRuns = -> db.all queries.getAllRuns
+export getAllRuns = -> do queries.getAllRuns.all 
 
 export updateScores = ->
-    result = (await do getAllRuns).reduce \
-        ((acc, run) -> {
-            acc...,
-            [run.userid]: (acc[run.userid] ? 0) + utilities.calcScore run.place
-        }),
-        {},
-    
-    Promise.all(for userid, score of result
-        db.run queries.updateScore, userid, score)
+    reducer = (acc, run) -> {
+        acc...
+        [run.userid]: (acc[run.userid] ? 0) + utilities.calcScore run.place
+    }
+    result = (do getAllRuns).reduce reducer, {}
+    queries.updateScore.run userid, score for userid, score of result
 
-export getScores = -> db.all queries.getAllScores
+export getScores = -> do queries.getAllScores.all 
 
-export getPointRankings = -> (await db.get queries.getPointRankings)?.data
+export getPointRankings = -> (do queries.getPointRankings.get)?.data
 
-export saveTable = (tableString) -> db.run queries.replacePointRankings, tableString
+export saveTable = (tableString) -> queries.replacePointRankings.run tableString
 
-export getOneRunForILRanking = (query) -> 
-    db.get queries.getOneRunForILRanking, objToNamedQueryParameters query, ['track', 'category', 'name']
+export getOneRunForILRanking = (query) -> queries.getOneRunForILRanking.get query
 
 export getNewRunsString = (runs) ->
-    (for run in runs
-        if await runInDB run then continue
-        else "New run! #{run.track} - #{run.category} in #{run.time} by #{run.name}")
-    .join '\n'
+    ("New run! #{run.track} - #{run.category} in #{run.time} by #{run.name}" for run in runs when runInDB run).join '\n'
