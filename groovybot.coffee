@@ -1,6 +1,5 @@
 import 'dotenv/config'
 
-import ReadwriteLock from 'readwrite-lock'
 import { Client, GatewayIntentBits, MessageFlags } from 'discord.js'
 
 import * as dbHelper from './modules/dbHelper.js'
@@ -10,8 +9,6 @@ import * as srcomHelper from './modules/srcomHelper.js'
 
 POINT_RANKINGS_DELAY = 60 * 60 * 1000 # 1 hour
 
-lock = new ReadwriteLock
-
 client = new Client { intents: [GatewayIntentBits.Guilds] }
 
 pointRankingsTask = (channelId) ->
@@ -19,31 +16,30 @@ pointRankingsTask = (channelId) ->
     console.log "#{do utilities.getDate}: Checking leaderboards"
     
     runs = await do srcomHelper.getRuns
-    await lock.acquireWrite 'db', ->
-        await dbHelper.updateUserCache runs
-        runsWithNames = dbHelper.getRunsWithUsernames runs
-        newRunsString = dbHelper.getNewRunsString runsWithNames
+    await dbHelper.updateUserCache runs
+    runsWithNames = dbHelper.getRunsWithUsernames runs
+    newRunsString = dbHelper.getNewRunsString runsWithNames
 
-        if newRunsString
-            console.log 'New runs found'
-            message = [utilities.encloseInCodeBlock newRunsString]
-            dbHelper.insertRuns runs
-            do dbHelper.updateScores
-            scores = do dbHelper.getScores
-            table = utilities.makeTable scores
-            oldTable = do dbHelper.getPointRankings
+    if newRunsString
+        console.log 'New runs found'
+        message = [utilities.encloseInCodeBlock newRunsString]
+        dbHelper.insertRuns runs
+        do dbHelper.updateScores
+        scores = do dbHelper.getScores
+        table = utilities.makeTable scores
+        oldTable = do dbHelper.getPointRankings
 
-            if table is oldTable
-                console.log 'But rankings unchanged'
-                message.push utilities.encloseInCodeBlock 'But rankings are unchanged'
-            else
-                console.log 'Point rankings update'
-                message.push utilities.encloseInCodeBlock "Point rankings update!\n#{table}"
-                dbHelper.saveTable table
-            message = message.join ''
-            try await channel.send message
-            catch then console.log "Failed to send message; it was probably too long. Message was:\n#{message}"
-        else console.log 'No new runs'
+        if table is oldTable
+            console.log 'But rankings unchanged'
+            message.push utilities.encloseInCodeBlock 'But rankings are unchanged'
+        else
+            console.log 'Point rankings update'
+            message.push utilities.encloseInCodeBlock "Point rankings update!\n#{table}"
+            dbHelper.saveTable table
+        message = message.join ''
+        try await channel.send message
+        catch then console.log "Failed to send message; it was probably too long. Message was:\n#{message}"
+    else console.log 'No new runs'
     
     # schedules itself to run again after delay
     setTimeout pointRankingsTask, POINT_RANKINGS_DELAY, channelId
@@ -70,16 +66,15 @@ client.once 'ready', ->
                 content: 'I only reply to commands issued in the GroovyBot channel.'
                 flags: MessageFlags.Ephemeral
         console.log "#{do utilities.getDate}: Recieved command #{i.commandName} from user #{i.user.username}, options: #{JSON.stringify(i.options.data)}"
-        await lock.acquireRead 'db', ->
-            [message, ephemeral] = await switch i.commandName
-                when 'newestruns' then commandHelper.newestruns i.options.getInteger 'numruns'
-                when 'runsperplayer' then do commandHelper.runsperplayer
-                when 'longeststanding' then do commandHelper.longeststanding
-                when 'pointrankings' then do commandHelper.pointrankings
-                when 'ilranking' then commandHelper.ilranking (i.options.getString 'name'), i.options.getString 'abbr'
-            await i.reply {
-                content: utilities.encloseInCodeBlock message
-                (ephemeral and {flags: MessageFlags.Ephemeral})...
-            }
-            console.log "#{do utilities.getDate}: Sent reply successfully! Ephemeral: #{ephemeral}"
+        [message, ephemeral] = await switch i.commandName
+            when 'newestruns' then commandHelper.newestruns i.options.getInteger 'numruns'
+            when 'runsperplayer' then do commandHelper.runsperplayer
+            when 'longeststanding' then do commandHelper.longeststanding
+            when 'pointrankings' then do commandHelper.pointrankings
+            when 'ilranking' then commandHelper.ilranking (i.options.getString 'name'), i.options.getString 'abbr'
+        await i.reply {
+            content: utilities.encloseInCodeBlock message
+            (ephemeral and {flags: MessageFlags.Ephemeral})...
+        }
+        console.log "#{do utilities.getDate}: Sent reply successfully! Ephemeral: #{ephemeral}"
 client.login process.env.DISCORD_TOKEN
