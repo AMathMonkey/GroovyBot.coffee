@@ -21,17 +21,17 @@ pointRankingsTask = (channelId) ->
     runs = await do srcomHelper.getRuns
     await lock.acquireWrite 'db', ->
         await dbHelper.updateUserCache runs
-        runsWithNames = await dbHelper.getRunsWithUsernames runs
-        newRunsString = await dbHelper.getNewRunsString runsWithNames
+        runsWithNames = dbHelper.getRunsWithUsernames runs
+        newRunsString = dbHelper.getNewRunsString runsWithNames
 
         if newRunsString
             console.log 'New runs found'
             message = [utilities.encloseInCodeBlock newRunsString]
-            await dbHelper.insertRuns runs
-            await do dbHelper.updateScores
-            scores = await do dbHelper.getScores
+            dbHelper.insertRuns runs
+            do dbHelper.updateScores
+            scores = do dbHelper.getScores
             table = utilities.makeTable scores
-            oldTable = await do dbHelper.getPointRankings
+            oldTable = do dbHelper.getPointRankings
 
             if table is oldTable
                 console.log 'But rankings unchanged'
@@ -39,7 +39,7 @@ pointRankingsTask = (channelId) ->
             else
                 console.log 'Point rankings update'
                 message.push utilities.encloseInCodeBlock "Point rankings update!\n#{table}"
-                await dbHelper.saveTable table
+                dbHelper.saveTable table
             message = message.join ''
             try await channel.send message
             catch then console.log "Failed to send message; it was probably too long. Message was:\n#{message}"
