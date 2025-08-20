@@ -76,9 +76,7 @@ client.once 'ready', ->
                 when 'runsperplayer' then do commandHelper.runsperplayer
                 when 'longeststanding' then do commandHelper.longeststanding
                 when 'pointrankings' then do commandHelper.pointrankings
-                when 'ilranking' then commandHelper.ilranking \
-                    i.options.getString 'name',
-                    i.options.getString 'abbr',
+                when 'ilranking' then commandHelper.ilranking (i.options.getString 'name'), i.options.getString 'abbr'
             await i.reply
                 content: utilities.encloseInCodeBlock message
                 ephemeral: ephemeral

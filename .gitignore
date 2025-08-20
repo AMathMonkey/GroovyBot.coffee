@@ -1,5 +1,4 @@
 node_modules
 .env
-package-lock.json
-groovy.db
+groovy.db*
 build

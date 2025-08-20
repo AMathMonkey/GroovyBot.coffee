@@ -25,14 +25,14 @@ queries =
             date TEXT NOT NULL,
             PRIMARY KEY (userid)
         )
-    ")
+    "
 
     createScores: db.prepare "
         CREATE TABLE IF NOT EXISTS scores (
             userid TEXT PRIMARY KEY NOT NULL,
             score INTEGER NOT NULL
         )
-    ")
+    "
 
     createFiles: db.prepare "
         CREATE TABLE IF NOT EXISTS files (
@@ -46,7 +46,7 @@ queries =
         AS
         SELECT runs.*, users.name, RANK() OVER(PARTITION BY category, track ORDER BY time) AS place FROM runs
         INNER JOIN users USING(userid)
-    ")
+    "
 
     getOneRunForILRanking: db.prepare "
         SELECT * from runsView
