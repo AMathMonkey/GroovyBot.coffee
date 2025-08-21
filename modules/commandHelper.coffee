@@ -2,7 +2,7 @@ import * as dbHelper from './dbHelper.js'
 import * as utilities from './utilities.js'
 
 export runsperplayer = ->
-    result = await do dbHelper.getNumberOfRunsPerPlayer
+    result = do dbHelper.getNumberOfRunsPerPlayer
     message = [
         'Number of different IL runs submitted by each player (12 maximum):\n'
         "#{row.name}: #{row.count}" for row in result...
@@ -14,7 +14,7 @@ export newestruns = (numruns) ->
         invalidArg = true
         numruns = 5
 
-    result = await dbHelper.getNewestRuns numruns
+    result = dbHelper.getNewestRuns numruns
         
     header =
         if numruns is 1 then 'Here is the newest run on the board'
@@ -28,7 +28,7 @@ export newestruns = (numruns) ->
     [message, false]
 
 export longeststanding = ->
-    strs = for run in await do dbHelper.getLongestStandingWRRuns
+    strs = for run in do dbHelper.getLongestStandingWRRuns
         years = Math.floor run.age / 365
         yearPart = if years then "#{years} year#{if years is 1 then '' else 's'} and " else ''
         days = run.age % 365
@@ -37,19 +37,22 @@ export longeststanding = ->
     message = ['WR runs sorted by longest standing:\n', strs...].join '\n'
     [message, false]
     
-export pointrankings = -> [await do dbHelper.getPointRankings, false]
+export pointrankings = -> [do dbHelper.getPointRankings, false]
 
 export ilranking = (name, abbr) ->
-    name = do (do (name ? '').trim).toLowerCase
+    name = do (name ? '').trim
     abbr = do (do (abbr ? '').trim).toLowerCase
 
     trackAndCategory = utilities.trackCategoryConverter abbr
     return ['Invalid category - please use track initials like cc or MMm100', true] unless trackAndCategory?
 
-    run = await dbHelper.getOneRunForILRanking { name, trackAndCategory... }
+    run = dbHelper.getOneRunForILRanking { name, trackAndCategory... }
+    if run then [(utilities.formatRun run), false] else ['No run matching that username', true]
 
-    if run then [
-        "#{run.track} - #{run.category} in #{run.time}
-        by #{run.name}, #{utilities.makeOrdinal run.place} place"
+export runsforuser = (name) ->
+    name = do (name ? '').trim
+    runs = dbHelper.getRunsForUser name
+    if runs.length then [
+        (utilities.formatRun run for run in runs).join '\n'
         false
-    ] else ['No run matching that username', true]
+    ] else ['No runs matching that username', true]

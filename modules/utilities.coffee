@@ -40,3 +40,7 @@ export trackCategoryConverter = (abbr) ->
     category = if abbr.endsWith '100' then '100 Points' else 'Time Attack'
     mapping = TRACK_ABBR_MAPPINGS.find (m) -> abbr.startsWith m[0]
     { category, track: mapping[1] } if mapping?
+
+export formatRun = (run) -> 
+    "#{run.track} - #{run.category} in #{run.time}
+    by #{run.name}, #{utilities.makeOrdinal run.place} place"

@@ -53,7 +53,7 @@ queries =
         WHERE
             category = @category
             AND track = @track
-            AND lower(name) = @name
+            AND name LIKE @name
     "
 
     getOneRunForNewRuns: db.prepare "
@@ -121,6 +121,7 @@ queries =
 
     getPointRankings: db.prepare "SELECT * FROM files WHERE filename = 'pointrankings'"
 
+    getRunsForUser: db.prepare "SELECT * FROM runsView WHERE name LIKE ?"
 
 do queries[query].run for query in ['createRuns', 'createUsers', 'createScores', 'createFiles', 'createRunsView']
 
@@ -167,3 +168,5 @@ export getOneRunForILRanking = (query) -> queries.getOneRunForILRanking.get quer
 
 export getNewRunsString = (runs) ->
     ("New run! #{run.track} - #{run.category} in #{run.time} by #{run.name}" for run in runs when not runInDB run).join '\n'
+
+export getRunsForUser = (name) -> queries.getRunsForUser.all name

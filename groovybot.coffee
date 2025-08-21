@@ -72,6 +72,7 @@ client.once 'ready', ->
             when 'longeststanding' then do commandHelper.longeststanding
             when 'pointrankings' then do commandHelper.pointrankings
             when 'ilranking' then commandHelper.ilranking (i.options.getString 'name'), i.options.getString 'abbr'
+            when 'runsforuser' then commandHelper.runsforuser i.options.getString 'name'
         await i.reply {
             content: utilities.encloseInCodeBlock message
             (ephemeral and {flags: MessageFlags.Ephemeral})...

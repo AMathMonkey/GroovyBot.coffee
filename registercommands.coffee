@@ -35,6 +35,14 @@ commands = [
                 .setName 'abbr'
                 .setDescription "Two- or three-letter track code, optionally followed by '100' if 100 Points"
                 .setRequired true
+    (new SlashCommandBuilder)
+        .setName 'runsforuser'
+        .setDescription 'returns all the runs on the leaderboard for a given user'
+        .addStringOption (option) ->
+            option
+                .setName 'name'
+                .setDescription 'SRC username of the runner'
+                .setRequired true
 ]
 
 clientId = '760174542961770519'
