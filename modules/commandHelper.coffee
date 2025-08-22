@@ -1,6 +1,9 @@
 import * as dbHelper from './dbHelper.js'
 import * as utilities from './utilities.js'
 
+CATEGORY_ORDERING = ['Time Attack', '100 Points']
+TRACK_ORDERING = ['Coventry Cove', 'Mount Mayhem', 'Inferno Isle', 'Sunset Sands', 'Metro Madness', 'Wicked Woods']
+
 export runsperplayer = ->
     result = do dbHelper.getNumberOfRunsPerPlayer
     message = [
@@ -22,8 +25,7 @@ export newestruns = (numruns) ->
 
     message = [
         "#{header}#{if invalidArg then " (can display between 1 and 10)" else ''}:\n",
-        "#{run.track} - #{run.category} in #{run.time}
-        by #{run.name}, #{utilities.makeOrdinal run.place} place" for run in result...
+        utilities.formatRun run for run in result...
     ].join '\n'
     [message, false]
 
@@ -52,6 +54,9 @@ export ilranking = (name, abbr) ->
 export runsforuser = (name) ->
     name = do (name ? '').trim
     runs = dbHelper.getRunsForUser name
+    runs.sort (a, b) ->
+        if (a1 = CATEGORY_ORDERING.indexOf a.category) isnt (b1 = CATEGORY_ORDERING.indexOf b.category) then a1 - b1
+        else (TRACK_ORDERING.indexOf a.track) - (TRACK_ORDERING.indexOf b.track)
     if runs.length then [
         (utilities.formatRun run for run in runs).join '\n'
         false

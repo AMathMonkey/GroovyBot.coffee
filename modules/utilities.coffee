@@ -43,4 +43,4 @@ export trackCategoryConverter = (abbr) ->
 
 export formatRun = (run) -> 
     "#{run.track} - #{run.category} in #{run.time}
-    by #{run.name}, #{utilities.makeOrdinal run.place} place"
+    by #{run.name}, #{makeOrdinal run.place} place"

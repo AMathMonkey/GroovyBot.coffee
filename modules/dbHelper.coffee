@@ -4,7 +4,7 @@ import * as srcomHelper from './srcomHelper.js'
 import * as utilities from './utilities.js'
 
 db = new Database('./groovy.db')
-db.pragma('journal_mode = WAL');
+db.pragma 'journal_mode = WAL'
 
 queries =
     createRuns: db.prepare "
