@@ -37,7 +37,7 @@ commands = [
                 .setRequired true
     (new SlashCommandBuilder)
         .setName 'runsforuser'
-        .setDescription 'returns all the runs on the leaderboard for a given user'
+        .setDescription 'Returns all the runs on the leaderboard for a given user'
         .addStringOption (option) ->
             option
                 .setName 'name'
