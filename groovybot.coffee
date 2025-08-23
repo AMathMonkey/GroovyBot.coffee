@@ -14,9 +14,16 @@ client = new Client { intents: [GatewayIntentBits.Guilds] }
 pointRankingsTask = (channelId) ->
     channel = client.channels.resolve channelId
     console.log "#{do utilities.getDate}: Checking leaderboards"
+    reschedule = -> setTimeout pointRankingsTask, POINT_RANKINGS_DELAY, channelId
     
-    runs = await do srcomHelper.getRuns
-    await dbHelper.updateUserCache runs
+    try
+        runs = await do srcomHelper.getRuns
+        await dbHelper.updateUserCache runs
+    catch e
+        console.error "Error when getting runs or usernames from speedrun.com", e
+        do reschedule
+        return
+        
     runsWithNames = dbHelper.getRunsWithUsernames runs
     newRunsString = dbHelper.getNewRunsString runsWithNames
 
@@ -42,7 +49,7 @@ pointRankingsTask = (channelId) ->
     else console.log 'No new runs'
     
     # schedules itself to run again after delay
-    setTimeout pointRankingsTask, POINT_RANKINGS_DELAY, channelId
+    do reschedule
 
 client.once 'ready', ->
     modeIsProd = process.env.MODE is 'PROD'
