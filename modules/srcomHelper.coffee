@@ -1,4 +1,3 @@
-import fetch from 'node-fetch'
 import * as utilities from './utilities.js'
 
 ids =
