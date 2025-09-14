@@ -44,3 +44,5 @@ export trackCategoryConverter = (abbr) ->
 export formatRun = (run) -> 
     "#{run.track} - #{run.category} in #{run.time}
     by #{run.name}, #{makeOrdinal run.place} place"
+
+export getNewRunsString = (runs) -> "New run! #{formatRun run}" for run in runs

@@ -23,14 +23,12 @@ pointRankingsTask = (channelId) ->
         console.error "Error when getting runs or usernames from speedrun.com", e
         do reschedule
         return
-        
-    runsWithNames = dbHelper.getRunsWithUsernames runs
-    newRunsString = dbHelper.getNewRunsString runsWithNames
 
-    if newRunsString
+    if (newRuns = dbHelper.findNewRuns runs).length
         console.log 'New runs found'
-        message = [utilities.encloseInCodeBlock newRunsString]
         dbHelper.insertRuns runs
+        newRuns = dbHelper.getNewRunsWithPositions newRuns
+        message = [utilities.encloseInCodeBlock utilities.getNewRunsString newRuns]
         do dbHelper.updateScores
         scores = do dbHelper.getScores
         table = utilities.makeTable scores
