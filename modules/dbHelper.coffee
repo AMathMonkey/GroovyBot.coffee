@@ -126,7 +126,7 @@ queries =
         SELECT EXISTS(
             SELECT date FROM users WHERE userid = ?
                 AND JULIANDAY('now') - JULIANDAY(date) < 7
-        ) as isCached
+        ) as result
     "
 
     getPointRankings: db.prepare "SELECT * FROM files WHERE filename = 'pointrankings'"
@@ -143,10 +143,12 @@ export getNewestRuns = (numruns) -> queries.getNewestRuns.all numruns
 
 export updateUserCache = (runs) ->
     userids = new Set (run.userid for run in runs)
-    for userid from userids
-        unless (queries.isUsernameCached.get userid).isCached
-            name = await srcomHelper.getUsername userid
-            queries.updateUser.run userid, name
+    promises = for userid from userids
+        do (userid) ->
+            unless (queries.isUsernameCached.get userid).result
+                name = await srcomHelper.getUsername userid
+                queries.updateUser.run userid, name
+    Promise.all promises
 
 export getLongestStandingWRRuns = -> do queries.getLongestStandingWRRuns.all 
 
