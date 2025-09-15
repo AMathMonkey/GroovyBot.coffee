@@ -45,7 +45,7 @@ queries =
         CREATE VIEW IF NOT EXISTS runsView
         AS
         SELECT runs.*, users.name, RANK() OVER(PARTITION BY category, track ORDER BY time) AS place FROM runs
-        INNER JOIN users USING(userid)
+        JOIN users USING(userid)
     "
 
     getOneRunForILRanking: db.prepare "
@@ -96,7 +96,7 @@ queries =
     "
 
     getNumberOfRunsPerPlayer: db.prepare "
-        SELECT name, count(name) AS count
+        SELECT name, COUNT(name) AS count
         FROM runsView
         GROUP BY name
         ORDER BY count DESC
@@ -119,7 +119,7 @@ queries =
             scores.score,
             RANK() OVER (ORDER BY scores.score DESC) AS pos
         FROM scores
-        INNER JOIN users USING(userid)
+        JOIN users USING(userid)
     "
 
     isUsernameCached: db.prepare "
