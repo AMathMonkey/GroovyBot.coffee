@@ -95,8 +95,6 @@ queries =
         FROM runsView WHERE place = 1 ORDER BY date
     "
 
-    deleteAllRuns: db.prepare "DELETE FROM runs"
-
     getNumberOfRunsPerPlayer: db.prepare "
         SELECT name, count(name) AS count
         FROM runsView
@@ -142,12 +140,6 @@ export insertRuns = (runs) -> queries.insertRun.run run for run in runs
 export getNumberOfRunsPerPlayer = -> do queries.getNumberOfRunsPerPlayer.all
 
 export getNewestRuns = (numruns) -> queries.getNewestRuns.all numruns
-
-export getRunsWithUsernames = (runs) ->
-    {
-        run...
-        (queries.getNameByUserId.get run.userid)...
-    } for run in runs
 
 export updateUserCache = (runs) ->
     userids = new Set (run.userid for run in runs)
