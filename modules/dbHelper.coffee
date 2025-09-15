@@ -65,7 +65,7 @@ queries =
                 AND time = @time
                 AND userid = @userid
                 AND date = @date
-        )
+        ) as result
     "
 
     getOneRunForNewRuns: db.prepare "
@@ -176,7 +176,7 @@ export saveTable = (tableString) -> queries.replacePointRankings.run tableString
 
 export getOneRunForILRanking = (query) -> queries.getOneRunForILRanking.get query
 
-export findNewRuns = (runs) -> run for run in runs when not queries.runInDB.get run
+export findNewRuns = (runs) -> run for run in runs when not (queries.runInDB.get run).result
 
 export getNewRunsWithPositions = (runs) -> queries.getOneRunForNewRuns.get run for run in runs
 
