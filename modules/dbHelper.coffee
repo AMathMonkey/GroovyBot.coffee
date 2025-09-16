@@ -142,10 +142,12 @@ updateScores = ->
     }
     result = (do getAllRuns).reduce reducer, {}
     queries.updateScore.run userid, score for userid, score of result
+    return
 
-export insertRuns = (runs) -> 
+export insertRuns = db.transaction (runs) -> 
     queries.insertRun.run run for run in runs
     do updateScores
+    return
     
 export getNumberOfRunsPerPlayer = -> do queries.getNumberOfRunsPerPlayer.all
 
