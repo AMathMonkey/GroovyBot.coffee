@@ -26,10 +26,8 @@ pointRankingsTask = (channelId) ->
 
     if (newRuns = dbHelper.findNewRuns runs).length
         console.log 'New runs found'
-        dbHelper.insertRuns runs
-        newRuns = dbHelper.getNewRunsWithPositions newRuns
-        message = [utilities.encloseInCodeBlock utilities.getNewRunsString newRuns]
-        do dbHelper.updateScores
+        dbHelper.insertRuns newRuns
+        message = [utilities.encloseInCodeBlock utilities.getNewRunsString dbHelper.getNewRunsWithPositions newRuns]
         scores = do dbHelper.getScores
         table = utilities.makeTable scores
         oldTable = do dbHelper.getPointRankings

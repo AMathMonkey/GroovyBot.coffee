@@ -135,7 +135,17 @@ queries =
 
 do queries[query].run for query in ['createRuns', 'createUsers', 'createScores', 'createFiles', 'createRunsView']
 
-export insertRuns = (runs) -> queries.insertRun.run run for run in runs
+updateScores = ->
+    reducer = (acc, run) -> {
+        acc...
+        [run.userid]: (acc[run.userid] ? 0) + utilities.calcScore run.place
+    }
+    result = (do getAllRuns).reduce reducer, {}
+    queries.updateScore.run userid, score for userid, score of result
+
+export insertRuns = (runs) -> 
+    queries.insertRun.run run for run in runs
+    do updateScores
     
 export getNumberOfRunsPerPlayer = -> do queries.getNumberOfRunsPerPlayer.all
 
@@ -153,14 +163,6 @@ export updateUserCache = (runs) ->
 export getLongestStandingWRRuns = -> do queries.getLongestStandingWRRuns.all 
 
 export getAllRuns = -> do queries.getAllRuns.all 
-
-export updateScores = ->
-    reducer = (acc, run) -> {
-        acc...
-        [run.userid]: (acc[run.userid] ? 0) + utilities.calcScore run.place
-    }
-    result = (do getAllRuns).reduce reducer, {}
-    queries.updateScore.run userid, score for userid, score of result
 
 export getScores = -> do queries.getAllScores.all 
 
