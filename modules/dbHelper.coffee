@@ -103,7 +103,7 @@ do queries[query].run for query in ['createRuns', 'createUsers', 'createScores',
 createVirtualRunTable = (runs) ->
     db.table 'virtualRunTable', 
         columns: ['userid', 'category', 'track', 'time', 'date']
-        rows: () -> yield from runs
+        rows: -> yield from runs
 
 updateScores = ->
     reducer = (acc, run) -> {
@@ -113,7 +113,7 @@ updateScores = ->
     scores = (do getAllRuns).reduce reducer, {}
     db.table 'virtualScoreTable', 
         columns: ['userid', 'score']
-        rows: () -> yield {userid, score} for userid, score of scores; return
+        rows: -> yield {userid, score} for userid, score of scores; return
     do (db.prepare "REPLACE INTO scores SELECT * FROM virtualScoreTable").run
     return
 
@@ -130,14 +130,14 @@ export getNewestRuns = (numruns) -> queries.getNewestRuns.all numruns
 export updateUserCache = (runs) ->
     db.table 'virtualUseridTable', 
         columns: ['userid']
-        rows: () -> yield {userid} for {userid} in runs; return
+        rows: -> yield {userid} for {userid} in runs; return
     uncached = do (db.prepare "SELECT DISTINCT userid FROM virtualUseridTable LEFT JOIN users USING(userid) WHERE date IS NULL OR JULIANDAY('now') - JULIANDAY(date) >= 7").all
     promises = for {userid} in uncached
         do (userid) -> {userid, name: await srcomHelper.getUsername userid}
     updates = await Promise.all promises
     db.table 'virtualUseridTable',
         columns: ['userid', 'name']
-        rows: () -> yield from updates; return 
+        rows: -> yield from updates; return 
     do (db.prepare "REPLACE INTO users SELECT *, DATETIME('now') FROM virtualUseridTable").run
 
 export getLongestStandingWRRuns = -> do queries.getLongestStandingWRRuns.all 
