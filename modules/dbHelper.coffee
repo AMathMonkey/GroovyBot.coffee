@@ -109,13 +109,6 @@ queries =
         JOIN users USING(userid)
     "
 
-    isUsernameCached: do (db.prepare "
-        SELECT EXISTS(
-            SELECT date FROM users WHERE userid = ?
-                AND JULIANDAY('now') - JULIANDAY(date) < 7
-        )
-    ").pluck
-
     getPointRankings: db.prepare "SELECT * FROM files WHERE filename = 'pointrankings'"
 
     getRunsForUser: db.prepare "SELECT * FROM runsView WHERE name LIKE ?"
@@ -150,13 +143,17 @@ export getNumberOfRunsPerPlayer = -> do queries.getNumberOfRunsPerPlayer.all
 export getNewestRuns = (numruns) -> queries.getNewestRuns.all numruns
 
 export updateUserCache = (runs) ->
-    userids = new Set (run.userid for run in runs)
-    promises = for userid from userids
-        do (userid) ->
-            unless queries.isUsernameCached.get userid
-                name = await srcomHelper.getUsername userid
-                queries.updateUser.run userid, name
-    Promise.all promises
+    db.table 'virtualUseridTable', 
+        columns: ['userid']
+        rows: () -> yield {userid} for {userid} in runs; return
+    uncached = do (db.prepare "SELECT DISTINCT userid FROM virtualUseridTable LEFT JOIN users USING(userid) WHERE date IS NULL OR JULIANDAY('now') - JULIANDAY(date) >= 7").all
+    promises = for {userid} in uncached
+        do (userid) -> {userid, name: await srcomHelper.getUsername userid}
+    updates = await Promise.all promises
+    db.table 'virtualUseridTable',
+        columns: ['userid', 'name']
+        rows: () -> yield from updates; return 
+    do (db.prepare "REPLACE INTO users SELECT *, DATETIME('now') FROM virtualUseridTable").run
 
 export getLongestStandingWRRuns = -> do queries.getLongestStandingWRRuns.all 
 
