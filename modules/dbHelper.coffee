@@ -99,7 +99,6 @@ queries =
 
     updateUser: db.prepare "REPLACE INTO users (userid, name, date) VALUES (?, ?, DATETIME('now'))"
 
-    updateScore: db.prepare "REPLACE INTO scores (userid, score) VALUES (?, ?)"
 
     getAllScores: db.prepare "
         SELECT
@@ -133,8 +132,11 @@ updateScores = ->
         acc...
         [run.userid]: (acc[run.userid] ? 0) + utilities.calcScore run.place
     }
-    result = (do getAllRuns).reduce reducer, {}
-    queries.updateScore.run userid, score for userid, score of result
+    scores = (do getAllRuns).reduce reducer, {}
+    db.table 'virtualScoreTable', 
+        columns: ['userid', 'score']
+        rows: () -> yield {userid, score} for userid, score of scores; return
+    do (db.prepare "REPLACE INTO scores SELECT * FROM virtualScoreTable").run
     return
 
 export insertRuns = db.transaction (runs) ->
