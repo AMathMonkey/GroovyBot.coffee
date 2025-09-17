@@ -47,7 +47,7 @@ pointRankingsTask = (channelId) ->
     # schedules itself to run again after delay
     do reschedule
 
-client.once 'ready', ->
+client.once 'clientReady', ->
     modeIsProd = process.env.MODE is 'PROD'
     console.log "#{do utilities.getDate}: Logged in as #{client.user.tag}!"
     groovybotChannel = client.channels.cache.find (x) -> x.name is 'groovybot'
