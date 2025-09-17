@@ -68,16 +68,6 @@ queries =
 
     getAllRuns: db.prepare "SELECT * from runsView"
 
-    insertRun: db.prepare "
-        REPLACE INTO runs (userid, category, track, time, date)
-            VALUES (@userid, @category, @track, @time, @date)
-    "
-
-    insertScore: db.prepare "
-        INSERT INTO scores (userid, score)
-            VALUES (@userid, @score)
-    "
-
     getLongestStandingWRRuns: db.prepare "
         SELECT *, FLOOR(JULIANDAY('now') - JULIANDAY(date)) AS age
         FROM runsView WHERE place = 1 ORDER BY date
@@ -94,11 +84,6 @@ queries =
     
     replacePointRankings: 
         db.prepare "REPLACE INTO files (filename, data) VALUES ('pointrankings', ?)"
-
-    getNameByUserId: db.prepare 'SELECT name FROM users WHERE userid = ?'
-
-    updateUser: db.prepare "REPLACE INTO users (userid, name, date) VALUES (?, ?, DATETIME('now'))"
-
 
     getAllScores: db.prepare "
         SELECT
