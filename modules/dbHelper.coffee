@@ -82,9 +82,6 @@ queries =
 
     getNewestRuns: db.prepare "SELECT * from runsView ORDER BY date DESC LIMIT ?"
     
-    replacePointRankings: 
-        db.prepare "REPLACE INTO files (filename, data) VALUES ('pointrankings', ?)"
-
     getAllScores: db.prepare "
         SELECT
             users.name,
@@ -95,6 +92,9 @@ queries =
     "
 
     getPointRankings: db.prepare "SELECT * FROM files WHERE filename = 'pointrankings'"
+
+    replacePointRankings: 
+        db.prepare "REPLACE INTO files (filename, data) VALUES ('pointrankings', ?)"
 
     getRunsForUser: db.prepare "SELECT * FROM runsView WHERE name LIKE ?"
 
@@ -150,7 +150,7 @@ export getAllRuns = -> do queries.getAllRuns.all
 
 export getScores = -> do queries.getAllScores.all 
 
-export getPointRankings = -> (do queries.getPointRankings.get)?.data
+export getTable = -> (do queries.getPointRankings.get)?.data
 
 export saveTable = (tableString) -> queries.replacePointRankings.run tableString
 

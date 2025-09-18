@@ -40,7 +40,7 @@ pointRankingsTask = (channelId) ->
     if newRuns.length or deletedRuns.length
         scores = do dbHelper.getScores
         table = utilities.makeTable scores
-        oldTable = do dbHelper.getPointRankings
+        oldTable = do dbHelper.getTable
 
         if table is oldTable
             console.log 'But rankings unchanged'

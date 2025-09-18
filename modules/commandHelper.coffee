@@ -39,7 +39,7 @@ export longeststanding = ->
     message = ['WR runs sorted by longest standing:\n', strs...].join '\n'
     [message, false]
     
-export pointrankings = -> [do dbHelper.getPointRankings, false]
+export pointrankings = -> [do dbHelper.getTable, false]
 
 export ilranking = (name, abbr) ->
     name = do (name ? '').trim
