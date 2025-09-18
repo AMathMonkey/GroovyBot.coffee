@@ -23,11 +23,21 @@ pointRankingsTask = (channelId) ->
         console.error "Error when getting runs or usernames from speedrun.com", e
         do reschedule
         return
+    
+    message = []
+    if (deletedRuns = dbHelper.findDeletedRuns runs).length
+        console.log 'Deletion detected'
+        message.push utilities.encloseInCodeBlock utilities.getDeletedRunsString dbHelper.getRunsWithPositions deletedRuns
+        dbHelper.deleteRuns deletedRuns
+    else console.log 'No deleted runs'
 
     if (newRuns = dbHelper.findNewRuns runs).length
         console.log 'New runs found'
         dbHelper.insertRuns newRuns
-        message = [utilities.encloseInCodeBlock utilities.getNewRunsString dbHelper.getNewRunsWithPositions newRuns]
+        message.push utilities.encloseInCodeBlock utilities.getNewRunsString dbHelper.getRunsWithPositions newRuns
+    else console.log 'No new runs'
+
+    if newRuns.length or deletedRuns.length
         scores = do dbHelper.getScores
         table = utilities.makeTable scores
         oldTable = do dbHelper.getPointRankings
@@ -42,7 +52,6 @@ pointRankingsTask = (channelId) ->
         message = message.join ''
         try await channel.send message
         catch then console.log "Failed to send message; it was probably too long. Message was:\n#{message}"
-    else console.log 'No new runs'
     
     # schedules itself to run again after delay
     do reschedule

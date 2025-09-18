@@ -46,3 +46,4 @@ export formatRun = (run) ->
     by #{run.name}, #{makeOrdinal run.place} place"
 
 export getNewRunsString = (runs) -> ("New run! #{formatRun run}" for run in runs).join '\n'
+export getDeletedRunsString = (runs) -> ("Deleted run... #{formatRun run}" for run in runs).join '\n'

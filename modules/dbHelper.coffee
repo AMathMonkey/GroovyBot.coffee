@@ -123,6 +123,12 @@ export insertRuns = db.transaction (runs) ->
     do updateScores
     return
     
+export deleteRuns = db.transaction (runs) ->
+    createVirtualRunTable runs
+    do (db.prepare "DELETE FROM runs WHERE (userid, category, track) IN (SELECT userid, category, track FROM virtualRunTable)").run
+    do updateScores
+    return
+
 export getNumberOfRunsPerPlayer = -> do queries.getNumberOfRunsPerPlayer.all
 
 export getNewestRuns = (numruns) -> queries.getNewestRuns.all numruns
@@ -132,9 +138,7 @@ export updateUserCache = (runs) ->
         columns: ['userid']
         rows: -> yield {userid} for {userid} in runs; return
     uncached = do (db.prepare "SELECT DISTINCT userid FROM virtualUseridTable LEFT JOIN users USING(userid) WHERE date IS NULL OR JULIANDAY('now') - JULIANDAY(date) >= 7").all
-    promises = for {userid} in uncached
-        do (userid) -> {userid, name: await srcomHelper.getUsername userid}
-    updates = await Promise.all promises
+    updates = await Promise.all ({userid, name: await srcomHelper.getUsername userid} for {userid} in uncached)
     db.table 'virtualUseridTable',
         columns: ['userid', 'name']
         rows: -> yield from updates; return 
@@ -156,8 +160,12 @@ export findNewRuns = (allRunsFromSRC) ->
     createVirtualRunTable allRunsFromSRC
     do (db.prepare "SELECT * FROM virtualRunTable EXCEPT SELECT * FROM runs").all
 
-export getNewRunsWithPositions = (newRuns) -> 
-    createVirtualRunTable newRuns
+export findDeletedRuns = (allRunsFromSRC) ->
+    createVirtualRunTable allRunsFromSRC
+    do (db.prepare "SELECT * FROM runs WHERE (userid, category, track) NOT IN (SELECT userid, category, track FROM virtualRunTable)").all
+
+export getRunsWithPositions = (runs) -> 
+    createVirtualRunTable runs
     do (db.prepare "SELECT * FROM runsView WHERE (userid, category, track) in (SELECT userid, category, track FROM virtualRunTable)").all
 
 export getRunsForUser = (name) -> queries.getRunsForUser.all name
