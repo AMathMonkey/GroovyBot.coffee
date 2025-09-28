@@ -113,7 +113,7 @@ updateScores = ->
     scores = (do getAllRuns).reduce reducer, {}
     db.table 'virtualScoreTable', 
         columns: ['userid', 'score']
-        rows: -> yield {userid, score} for userid, score of scores; return
+        rows: -> yield { userid, score } for userid, score of scores; return
     do (db.prepare "REPLACE INTO scores SELECT * FROM virtualScoreTable").run
     return
 
@@ -136,9 +136,9 @@ export getNewestRuns = (numruns) -> queries.getNewestRuns.all numruns
 export updateUserCache = (runs) ->
     db.table 'virtualUseridTable', 
         columns: ['userid']
-        rows: -> yield {userid} for {userid} in runs; return
+        rows: -> yield { userid } for { userid } in runs; return
     uncached = do (db.prepare "SELECT DISTINCT userid FROM virtualUseridTable LEFT JOIN users USING(userid) WHERE date IS NULL OR JULIANDAY('now') - JULIANDAY(date) >= 7").all
-    updates = await Promise.all ({userid, name: await srcomHelper.getUsername userid} for {userid} in uncached)
+    updates = await Promise.all ({ userid, name: await srcomHelper.getUsername userid } for { userid } in uncached)
     db.table 'virtualUseridTable',
         columns: ['userid', 'name']
         rows: -> yield from updates; return 

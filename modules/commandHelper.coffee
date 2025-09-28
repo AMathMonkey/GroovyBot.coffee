@@ -37,17 +37,18 @@ export longeststanding = ->
         "#{run.track} - #{run.category} in #{run.time} by #{run.name}, #{yearPart}#{dayPart} old"
     message: ['WR runs sorted by longest standing:\n', strs...].join '\n'
     
-export pointrankings = -> {message: do dbHelper.getTable}
+export pointrankings = -> { message: do dbHelper.getTable }
 
 export ilranking = (name, abbr) ->
     name = do (name ? '').trim
     abbr = do (abbr ? '').trim().toLowerCase
 
     trackAndCategory = utilities.trackCategoryConverter abbr
-    return {message: 'Invalid category - please use track initials like cc or MMm100'} unless trackAndCategory?
+    return { message: 'Invalid category - please use track initials like cc or MMm100' } unless trackAndCategory?
 
     run = dbHelper.getOneRunForILRanking { name, trackAndCategory... }
-    if run then {message: utilities.formatRun run} else {message: 'No run matching that username', flags: MessageFlags.Ephemeral}
+    if run then { message: utilities.formatRun run } 
+    else { message: 'No run matching that username', flags: MessageFlags.Ephemeral }
 
 export runsforuser = (name) ->
     name = do (name ? '').trim
@@ -55,5 +56,5 @@ export runsforuser = (name) ->
     runs.sort (a, b) ->
         if (a1 = CATEGORY_ORDERING.indexOf a.category) isnt (b1 = CATEGORY_ORDERING.indexOf b.category) then a1 - b1
         else (TRACK_ORDERING.indexOf a.track) - (TRACK_ORDERING.indexOf b.track)
-    if runs.length then {message: (utilities.formatRun run for run in runs).join '\n'}
-    else {message: 'No runs matching that username', flags: MessageFlags.Ephemeral}
+    if runs.length then { message: (utilities.formatRun run for run in runs).join '\n' }
+    else { message: 'No runs matching that username', flags: MessageFlags.Ephemeral }

@@ -16,7 +16,8 @@ export encloseInCodeBlock = (message) -> "```\n#{message}\n```"
 
 export formatTime = (timeString) ->
     timeObj = tinyduration.parse timeString
-    "#{timeObj.minutes}:#{((timeObj.seconds ? 0).toFixed 2).padStart 5, '0'}"
+    formattedSeconds = (timeObj.seconds ? 0).toFixed(2).padStart 5, '0'
+    "#{timeObj.minutes}:#{formattedSeconds}"
 
 export makeOrdinal = (n) ->
     (String n).concat(
