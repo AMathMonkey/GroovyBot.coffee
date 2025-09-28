@@ -41,7 +41,7 @@ export pointrankings = -> {message: do dbHelper.getTable}
 
 export ilranking = (name, abbr) ->
     name = do (name ? '').trim
-    abbr = do (do (abbr ? '').trim).toLowerCase
+    abbr = do (abbr ? '').trim().toLowerCase
 
     trackAndCategory = utilities.trackCategoryConverter abbr
     return {message: 'Invalid category - please use track initials like cc or MMm100'} unless trackAndCategory?
