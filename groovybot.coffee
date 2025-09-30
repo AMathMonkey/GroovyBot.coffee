@@ -78,7 +78,7 @@ client.once 'clientReady', ->
                 content: 'I only reply to commands issued in the GroovyBot channel.'
                 flags: MessageFlags.Ephemeral
         console.log "#{do utilities.getDate}: Recieved command #{i.commandName} from user #{i.user.username}, options: #{JSON.stringify(i.options.data)}"
-        {message, flags} = await switch i.commandName
+        { message, flags } = await switch i.commandName
             when 'newestruns' then commandHelper.newestruns i.options.getInteger 'numruns'
             when 'runsperplayer' then do commandHelper.runsperplayer
             when 'longeststanding' then do commandHelper.longeststanding
